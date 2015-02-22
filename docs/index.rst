@@ -9,9 +9,9 @@ Welcome to cloudify-host-pool-service documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-.. automodule:: cloudify_hostpool
+.. automodule:: cloudify_hostpool.config.base
    :members:
    :undoc-members:
    :show-inheritance:
