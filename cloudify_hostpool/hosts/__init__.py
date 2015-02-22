@@ -12,20 +12,3 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-
-from setuptools import setup
-
-setup(
-    name='cloudify-host-pool-service',
-    version='1.0',
-    license='LICENSE',
-    packages=['cloudify_hostpool.storage',
-              'cloudify_hostpool.config',
-              'cloudify_hostpool.hosts'],
-    description='Cloudify Host Pool Service',
-    install_requires=[
-        'flask',
-        'flask_restful',
-        'PyYAML'
-    ]
-)
