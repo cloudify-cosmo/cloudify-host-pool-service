@@ -1,0 +1,8 @@
+default:
+  auth:
+    username: x
+  port: 123
+
+hosts:
+  - host: google.com
+    port: 80

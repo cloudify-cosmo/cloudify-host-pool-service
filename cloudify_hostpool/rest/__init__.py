@@ -13,20 +13,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from setuptools import setup
+"""
+This package is intended for rest api front end implementation details.
 
-setup(
-    name='cloudify-host-pool-service',
-    version='1.0',
-    license='LICENSE',
-    packages=['cloudify_hostpool.storage',
-              'cloudify_hostpool.config',
-              'cloudify_hostpool.hosts',
-              'cloudify_hostpool.rest'],
-    description='Cloudify Host Pool Service',
-    install_requires=[
-        'flask',
-        'flask_restful',
-        'PyYAML'
-    ]
-)
+"""
