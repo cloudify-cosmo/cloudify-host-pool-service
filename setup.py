@@ -19,10 +19,7 @@ setup(
     name='cloudify-host-pool-service',
     version='1.0',
     license='LICENSE',
-    packages=['cloudify_hostpool.config',
-              'cloudify_hostpool.hosts',
-              'cloudify_hostpool.rest',
-              'cloudify_hostpool.storage'],
+    packages=['cloudify_hostpool.storage'],
     description='Cloudify Host Pool Service',
     install_requires=[
         'flask',
