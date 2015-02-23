@@ -10,7 +10,6 @@ hosts:
   - host: mybox123
     auth:
       username: ubuntu
-      keyfile: /home/ubuntu/.ssh/key1.pem
     port: 22
 
   # box with default config

@@ -13,14 +13,15 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
+import os
 import tempfile
-import unittest
-import mock
 import threading
+import unittest
+
+import mock
 
 from cloudify_hostpool import exceptions
 from cloudify_hostpool.rest.backend import RestBackend
-from cloudify_hostpool.storage import sqlite
 
 
 def _mock_scan_alive(endpoints, _=None):
@@ -43,12 +44,13 @@ class RestBackendTest(unittest.TestCase):
 
     def setUp(self):
         pool = {'hosts': self._generate_hosts(self.NUMBER_OF_HOSTS)}
-        self.backend = RestBackend(pool=pool, db_file_name=tempfile.mktemp())
+        fd, self.db_tmp = tempfile.mkstemp()
+        os.close(fd)
+        self.backend = RestBackend(pool=pool, db_file_name=self.db_tmp)
 
     def tearDown(self):
-        with self.backend.storage.connect() as cursor:
-            cursor.execute('DROP TABLE {0}'
-                           .format(sqlite.SQLiteStorage.TABLE_NAME))
+        if os.path.exists(self.db_tmp):
+            os.unlink(self.db_tmp)
 
     def _generate_hosts(self, count):
         return map(lambda i: {
@@ -160,3 +162,40 @@ class RestBackendTest(unittest.TestCase):
     def test_acquire_all_hosts_dead(self):
         self.assertRaises(exceptions.NoHostAvailableException,
                           self.backend.acquire_host)
+
+    @mock.patch('cloudify_hostpool.rest.backend.scan.scan',
+                _mock_scan_alive)
+    def test_get_keyfile(self):
+        """
+        Test checking if key is properly read from the file and attached to
+        the host structure instead of the key's file path.
+        """
+        key_mock = 'test_key'
+        host_id = 'test_id'
+        keyfile = 'key.pem'
+        host_with_key = {
+            'host': '127.0.0.1',
+            'port': '22',
+            'auth': {'username': 'user', 'keyfile': keyfile},
+            'host_id': host_id,
+            'alive': True,
+            'reserved': False
+        }
+        with open(keyfile, 'w') as f:
+            f.write(key_mock)
+        new_db = tempfile.NamedTemporaryFile()
+        try:
+            """
+            New instance of RestBackend is being created to make sure that
+            there is one and only host in storage with given key content that
+            is to be acquired.
+            """
+            backend = RestBackend(pool={'hosts': [host_with_key, ]},
+                                  db_file_name=new_db.name)
+            host = backend.acquire_host()
+            self.assertEqual(host['auth']['keyfile'], key_mock)
+            host = backend.get_host(host['host_id'])
+            self.assertEqual(host['auth']['keyfile'], key_mock)
+        finally:
+            if os.path.exists(keyfile):
+                os.unlink(keyfile)
