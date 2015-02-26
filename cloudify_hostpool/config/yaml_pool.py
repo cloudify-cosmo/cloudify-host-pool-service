@@ -13,6 +13,7 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
+import os
 import re
 import socket
 import struct
@@ -76,7 +77,13 @@ class YAMLPoolLoader(Loader):
                     "'host' or the 'ip_range' key")
 
     def _get_auth(self, host):
-        return host.get('auth') or self.default.get('auth')
+        auth = host.get('auth') or self.default.get('auth', {})
+        keyfile = auth.get('keyfile')
+        if keyfile and not os.access(keyfile, os.R_OK):
+            raise exceptions.ConfigurationError(
+                'Key file {0} does not exist or does not have '
+                'the proper permissions'.format(keyfile))
+        return auth
 
     def _get_port(self, host):
         return host.get('port') or self.default.get('port')

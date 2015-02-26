@@ -14,6 +14,7 @@
 # * limitations under the License.
 
 import os
+import tempfile
 import testtools
 
 from cloudify_hostpool.config import yaml_pool
@@ -184,3 +185,37 @@ class YAMLPoolLoaderTest(testtools.TestCase):
             exceptions.ConfigurationError,
             'Pool configuration is missing a hosts section',
             yaml_pool.YAMLPoolLoader, {})
+
+    def test_bad_keyfile(self):
+        tmp_dir = tempfile.mkdtemp()
+        config = {'default': {'auth': {'username': 'x'}, 'port': 123},
+                  'hosts': [{'host': 'google.com',
+                             'auth': {'username': 'x',
+                                      'keyfile': tmp_dir + '/wrong_file'},
+                             'port': 80}]}
+        try:
+            pool = yaml_pool.YAMLPoolLoader(config)
+            self.assertRaisesRegexp(exceptions.ConfigurationError,
+                                    'does not exist or does not have the '
+                                    'proper permissions', pool.load().next)
+        finally:
+            os.rmdir(tmp_dir)
+
+    def test_good_keyfile(self):
+        fd, good_file = tempfile.mkstemp()
+        os.close(fd)
+        config = {'default': {'auth': {'username': 'x'}, 'port': 123},
+                  'hosts': [{'host': 'google.com',
+                             'auth': {'username': 'x',
+                                      'keyfile': good_file},
+                             'port': 80}]}
+        try:
+            config_loader = yaml_pool.YAMLPoolLoader(config)
+            self.assertEquals(config_loader.load().next(),
+                              dict(host='google.com',
+                                   auth=dict(username='x',
+                                             keyfile=good_file),
+                                   port=80,
+                                   public_address=None))
+        finally:
+            os.unlink(good_file)

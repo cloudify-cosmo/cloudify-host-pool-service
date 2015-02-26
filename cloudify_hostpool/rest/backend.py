@@ -81,6 +81,7 @@ class RestBackend(object):
                     host['global_id'],
                     {'reserved': False,
                      'host_id': str(uuid.uuid4())})
+                self._load_keyfile(hst)
                 return hst
 
         # we didn't manager to acquire any host
@@ -97,6 +98,7 @@ class RestBackend(object):
         hosts = self.storage.get_hosts(host_id=host_id)
         if len(hosts) == 0:
             raise exceptions.HostNotFoundException(host_id)
+        self._load_keyfile(hosts[0])
         return hosts[0]
 
     def _get_free_hosts(self):
@@ -125,3 +127,11 @@ class RestBackend(object):
         address, port = host['host'], host['port']
         results = scan.scan([(address, port)])
         return results[address, port]
+
+    @staticmethod
+    def _load_keyfile(host):
+        if host['auth'].get('keyfile'):
+            keyfile = host['auth']['keyfile']
+            with open(keyfile) as f:
+                content = f.read()
+                host['auth']['keyfile'] = content
