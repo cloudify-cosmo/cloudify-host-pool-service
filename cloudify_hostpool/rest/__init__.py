@@ -17,3 +17,8 @@
 This package is intended for rest api front end implementation details.
 
 """
+
+
+# The service needs to initialise global variables. Such behaviour
+# is not always desired, for example in service's tests.
+DO_INIT_BACKEND = True
