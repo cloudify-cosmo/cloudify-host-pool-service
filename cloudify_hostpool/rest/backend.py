@@ -13,6 +13,7 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
+import os
 import uuid
 
 from cloudify_hostpool.hosts import scan
@@ -21,12 +22,20 @@ from cloudify_hostpool.config import yaml_pool
 from cloudify_hostpool import exceptions
 
 
+_DB_FILE_PATH_ENV = 'CFY_HOST_POOL_DB_FILE'
+
+
 class RestBackend(object):
 
     def __init__(self, pool, db_file_name=None):
         if db_file_name is None:
-            # generate a new file on each initialization
-            db_file_name = 'host-pool-{0}.sqlite'.format(uuid.uuid4())
+            db_file_name = os.environ.get(_DB_FILE_PATH_ENV)
+            if db_file_name is None:
+                if pool.endswith('.yaml'):
+                    basename = pool.rsplit('.yaml', 1)[0]
+                    db_file_name = basename + '.sqlite'
+                else:
+                    db_file_name = pool + '.sqlite'
         self.storage = sqlite.SQLiteStorage(db_file_name)
         config_loader = yaml_pool.YAMLPoolLoader(pool)
         hosts = config_loader.load()
