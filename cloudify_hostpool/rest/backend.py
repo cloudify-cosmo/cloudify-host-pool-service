@@ -37,18 +37,21 @@ class RestBackend(object):
                 else:
                     db_file_name = pool + '.sqlite'
         self.storage = sqlite.SQLiteStorage(db_file_name)
-        config_loader = yaml_pool.YAMLPoolLoader(pool)
-        hosts = config_loader.load()
-        for host in hosts:
+        if self.storage.has_initialised_storage:
+            # Don't populate the database if it has not just been
+            # initialised.
+            config_loader = yaml_pool.YAMLPoolLoader(pool)
+            hosts = config_loader.load()
+            for host in hosts:
 
-            # initial values for the hosts.
-            # these will update over time.
-            host.update({
-                'alive': False,
-                'reserved': False,
-                'host_id': None
-            })
-            self.storage.add_host(host)
+                # initial values for the hosts.
+                # these will update over time.
+                host.update({
+                    'alive': False,
+                    'reserved': False,
+                    'host_id': None
+                })
+                self.storage.add_host(host)
 
     def list_hosts(self):
         hosts = self.storage.get_hosts()

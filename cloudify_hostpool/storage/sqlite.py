@@ -142,6 +142,9 @@ class SQLiteStorage(Storage):
                            (global_id, ))
             return cursor.fetchone(), changed
 
+    def has_initialised_storage(self):
+        return self._table_created
+
     def _create_table(self):
 
         self._schema.add_column('host_id', 'text')
@@ -153,9 +156,14 @@ class SQLiteStorage(Storage):
         self._schema.add_column('reserved', 'integer')
 
         with self.connect() as cursor:
-            sql = 'CREATE TABLE IF NOT EXISTS {0} {1}'.format(
+            sql = 'CREATE TABLE {0} {1}'.format(
                 self.TABLE_NAME, self._schema.create())
-            cursor.execute(sql)
+            try:
+                cursor.execute(sql)
+            except sqlite3.OperationalError:
+                self._table_created = False
+            else:
+                self._table_created = True
 
 
 def _dict_row_factory(cursor, row):

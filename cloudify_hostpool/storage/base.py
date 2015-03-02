@@ -97,3 +97,21 @@ class Storage(object):
         :rtype `dict`
 
         """
+
+    @abc.abstractproperty
+    def has_initialised_storage(self):
+        # Later we will remove this flag from the interface and change
+        # the way we pass this information.
+
+        """
+        Property indicating if the storage has initially been created,
+        for example the database file has been allocated and tables have
+        been created.
+
+        The purpose of this flag is to inform whether the storage should
+        be filled with data.
+
+        :return if storage has been initialised (and should be loaded)
+        :rtype bool
+
+        """
