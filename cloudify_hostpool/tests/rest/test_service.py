@@ -19,14 +19,18 @@ import os
 import json
 import testtools
 
+import cloudify_hostpool.rest
 from cloudify_hostpool.tests import rest
-from cloudify_hostpool.rest import service
+
+# Tests expect to initialise backend themselves, in a nondefault way.
+cloudify_hostpool.rest.DO_INIT_BACKEND = False
 
 
 class ServiceTest(testtools.TestCase):
 
     def setUp(self):
         super(ServiceTest, self).setUp()
+        from cloudify_hostpool.rest import service
         tempdir = tempfile.mkdtemp()
         config_file = os.path.join(
             os.path.dirname(rest.__file__),

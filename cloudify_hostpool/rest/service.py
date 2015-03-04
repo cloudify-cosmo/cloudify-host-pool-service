@@ -19,8 +19,10 @@ from flask import Flask
 from flask import jsonify
 from flask_restful import Api
 
+import cloudify_hostpool.rest
 from cloudify_hostpool import exceptions
 from cloudify_hostpool.rest import backend
+
 
 app = Flask(__name__)
 api = Api(app)
@@ -92,5 +94,8 @@ def get_host(host_id):
     host = api.backend.get_host(host_id)
     return jsonify(host), httplib.OK
 
+
+if cloudify_hostpool.rest.DO_INIT_BACKEND:
+    _init_backend()
 if __name__ == '__main__':
     app.run()
