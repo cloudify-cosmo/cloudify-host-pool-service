@@ -23,6 +23,10 @@ from cloudify_hostpool.config import yaml_pool
 from cloudify_hostpool import exceptions
 
 
+# we currently don't expose these in the configuration because its somewhat
+# internal. perhaps at a later time we can have this configurable, at which
+# point we need to define the semantics of how to initialize the components.
+
 FLock = filelock.FileLock('host-pool-backend.lock')
 
 # if this file exists, loading of the pool will not take place.
