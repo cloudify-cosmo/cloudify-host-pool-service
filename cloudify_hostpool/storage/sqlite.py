@@ -155,15 +155,9 @@ class SQLiteStorage(Storage):
         self._schema.add_column('reserved', 'integer')
 
         with self.connect() as cursor:
-            sql = 'CREATE TABLE {0} {1}'.format(
+            sql = 'CREATE TABLE IF NOT EXISTS {0} {1}'.format(
                 self.TABLE_NAME, self._schema.create())
-            try:
-                cursor.execute(sql)
-            except sqlite3.OperationalError as e:
-                if e.message == 'table hosts already exists':
-                    pass
-                else:
-                    raise
+            cursor.execute(sql)
 
 
 def _dict_row_factory(cursor, row):
