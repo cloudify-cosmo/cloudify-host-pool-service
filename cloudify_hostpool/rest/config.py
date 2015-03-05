@@ -14,14 +14,6 @@
 #    * limitations under the License.
 
 
-DEFAULTS = {
-
-    # default storage configuration is a file path under which the sqlite
-    # database will be saved.
-    'storage': 'host-pool-data.sqlite'
-}
-
-
 class Config(object):
 
     def __init__(self, config):
@@ -37,10 +29,6 @@ class Config(object):
     @property
     def pool(self):
         return self._config['pool']
-
-    @property
-    def storage(self):
-        return self._config.get('storage', DEFAULTS['storage'])
 
 _instance = None
 

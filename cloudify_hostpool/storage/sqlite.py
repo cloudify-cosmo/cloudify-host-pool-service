@@ -84,7 +84,7 @@ class SQLiteStorage(Storage):
 
     def __init__(self, storage=None):
         if storage is None:
-            storage = config.DEFAULTS['storage']
+            storage = 'host-pool-data.sqlite'
         self._filename = os.path.abspath(storage)
         self._schema = SQLiteSchema(
             primary_key_name='global_id',

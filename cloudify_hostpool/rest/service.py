@@ -51,17 +51,13 @@ def setup():
             'point to the application configuration file ')
 
     # initialize application backend
-    backend = rest_backend.RestBackend(
-        pool=config.get().pool,
-        storage=config.get().storage)
+    backend = rest_backend.RestBackend(pool=config.get().pool)
 
 
 def reset_backend():
     global app, backend
     # initialize application backend
-    backend = rest_backend.RestBackend(
-        pool=config.get().pool,
-        storage=config.get().storage)
+    backend = rest_backend.RestBackend(pool=config.get().pool)
 
 setup()
 
