@@ -13,35 +13,57 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
+import os
 import httplib
+import yaml
 
 from flask import Flask
 from flask import jsonify
 from flask_restful import Api
 
-import cloudify_hostpool.rest
 from cloudify_hostpool import exceptions
-from cloudify_hostpool.rest import backend
+from cloudify_hostpool.rest import backend as rest_backend
+from cloudify_hostpool.rest import config
 
 
-app = Flask(__name__)
-api = Api(app)
-
-api.backend = None
+app, backend = None, None
 
 
-def _init_backend(pool=None, db_file_name=None):
+def setup():
 
-    if pool is None:
+    global app, backend
 
-        # note that this means that a 'host-pool.yaml' file must be located
-        # in the current working directory when running the server.
+    # initialize flask application
+    app = Flask(__name__)
+    Api(app)
 
-        pool = 'host-pool.yaml'
+    # load application configuration file is exists
+    config_file_path = os.environ.get('HOST_POOL_SERVICE_CONFIG_PATH')
+    if config_file_path:
+        with open(config_file_path) as f:
+            yaml_conf = yaml.load(f.read())
+            config.configure(yaml_conf)
+    else:
+        raise exceptions.ConfigurationError(
+            'Failed loading application: '
+            'HOST_POOL_SERVICE_CONFIG_PATH environment '
+            'variable is not defined. Use this variable to '
+            'point to the application configuration file ')
 
-    global api
-    api.backend = backend.RestBackend(pool=pool,
-                                      db_file_name=db_file_name)
+    # initialize application backend
+    backend = rest_backend.RestBackend(
+        pool=config.get().pool,
+        storage=config.get().storage)
+
+
+def reset_backend():
+    global app, backend
+    # initialize application backend
+    backend = rest_backend.RestBackend(
+        pool=config.get().pool,
+        storage=config.get().storage)
+
+setup()
 
 
 @app.errorhandler(exceptions.HostPoolHTTPException)
@@ -58,7 +80,7 @@ def list_hosts():
     List allocated hosts
     """
 
-    hosts = api.backend.list_hosts()
+    hosts = backend.list_hosts()
     return jsonify(hosts=hosts), httplib.OK
 
 
@@ -69,7 +91,7 @@ def acquire_host():
     Acquire(allocate) the host
     """
 
-    host = api.backend.acquire_host()
+    host = backend.acquire_host()
     return jsonify(host), httplib.CREATED
 
 
@@ -80,7 +102,7 @@ def release_host(host_id):
     Release the host with the given host_id
     """
 
-    host = api.backend.release_host(host_id)
+    host = backend.release_host(host_id)
     return jsonify(host), httplib.OK
 
 
@@ -91,11 +113,9 @@ def get_host(host_id):
     Get the details of the host with the given host_id
     """
 
-    host = api.backend.get_host(host_id)
+    host = backend.get_host(host_id)
     return jsonify(host), httplib.OK
 
 
-if cloudify_hostpool.rest.DO_INIT_BACKEND:
-    _init_backend()
 if __name__ == '__main__':
     app.run()

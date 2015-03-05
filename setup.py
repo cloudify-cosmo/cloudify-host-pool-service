@@ -27,6 +27,7 @@ setup(
     install_requires=[
         'flask',
         'flask_restful',
-        'PyYAML'
+        'PyYAML',
+        'filelock==0.2.0'
     ]
 )

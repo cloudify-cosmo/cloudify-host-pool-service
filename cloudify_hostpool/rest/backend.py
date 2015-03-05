@@ -13,8 +13,9 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
-import os
+import filelock
 import uuid
+import os
 
 from cloudify_hostpool.hosts import scan
 from cloudify_hostpool.storage import sqlite
@@ -22,36 +23,38 @@ from cloudify_hostpool.config import yaml_pool
 from cloudify_hostpool import exceptions
 
 
-_DB_FILE_PATH_ENV = 'CFY_HOST_POOL_DB_FILE'
+FLock = filelock.FileLock('host-pool-backend.lock')
+
+# if this file exists, loading of the pool will not take place.
+# note that this means that multiple instances of this application that
+# execute from the same directory will only load the pool the first
+# time, and all other instances will use the previously loaded pool.
+INDICATOR = 'host-pool-loaded-indicator'
 
 
 class RestBackend(object):
 
-    def __init__(self, pool, db_file_name=None):
-        if db_file_name is None:
-            db_file_name = os.environ.get(_DB_FILE_PATH_ENV)
-            if db_file_name is None:
-                if pool.endswith('.yaml'):
-                    basename = pool.rsplit('.yaml', 1)[0]
-                    db_file_name = basename + '.sqlite'
-                else:
-                    db_file_name = pool + '.sqlite'
-        self.storage = sqlite.SQLiteStorage(db_file_name)
-        if self.storage.has_initialised_storage:
-            # Don't populate the database if it has not just been
-            # initialised.
-            config_loader = yaml_pool.YAMLPoolLoader(pool)
-            hosts = config_loader.load()
-            for host in hosts:
+    def __init__(self, pool, storage=None):
+        self.storage = sqlite.SQLiteStorage(storage)
+        # allow only one process to do the initial load
+        with FLock:
+            if not os.path.exists(INDICATOR):
+                self._load_pool(pool)
+                open(INDICATOR, 'a').close()
 
-                # initial values for the hosts.
-                # these will update over time.
-                host.update({
-                    'alive': False,
-                    'reserved': False,
-                    'host_id': None
-                })
-                self.storage.add_host(host)
+    def _load_pool(self, pool):
+        config_loader = yaml_pool.YAMLPoolLoader(pool)
+        hosts = config_loader.load()
+        for host in hosts:
+
+            # initial values for the hosts.
+            # these will update over time.
+            host.update({
+                'alive': False,
+                'reserved': False,
+                'host_id': None
+            })
+            self.storage.add_host(host)
 
     def list_hosts(self):
         hosts = self.storage.get_hosts()

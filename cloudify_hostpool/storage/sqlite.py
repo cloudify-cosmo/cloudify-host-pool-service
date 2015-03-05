@@ -14,6 +14,7 @@
 # * limitations under the License.
 
 import time
+import os
 import json
 import sqlite3
 from contextlib import contextmanager
@@ -22,6 +23,7 @@ from collections import namedtuple
 
 from cloudify_hostpool.storage.base import Storage
 from cloudify_hostpool import exceptions
+from cloudify_hostpool.rest import config
 
 
 class SQLiteSchema(object):
@@ -80,8 +82,10 @@ class SQLiteStorage(Storage):
 
     TABLE_NAME = 'hosts'
 
-    def __init__(self, db_filename):
-        self._filename = db_filename
+    def __init__(self, storage=None):
+        if storage is None:
+            storage = config.DEFAULTS['storage']
+        self._filename = os.path.abspath(storage)
         self._schema = SQLiteSchema(
             primary_key_name='global_id',
             primary_key_type='integer'
@@ -111,7 +115,6 @@ class SQLiteStorage(Storage):
             return list(cursor.fetchall())
 
     def add_host(self, host):
-
         with self.connect() as cursor:
             column_names = host.keys()
             values = _construct_values_tuple(host)
@@ -142,9 +145,6 @@ class SQLiteStorage(Storage):
                            (global_id, ))
             return cursor.fetchone(), changed
 
-    def has_initialised_storage(self):
-        return self._table_created
-
     def _create_table(self):
 
         self._schema.add_column('host_id', 'text')
@@ -160,10 +160,11 @@ class SQLiteStorage(Storage):
                 self.TABLE_NAME, self._schema.create())
             try:
                 cursor.execute(sql)
-            except sqlite3.OperationalError:
-                self._table_created = False
-            else:
-                self._table_created = True
+            except sqlite3.OperationalError as e:
+                if e.message == 'table hosts already exists':
+                    pass
+                else:
+                    raise
 
 
 def _dict_row_factory(cursor, row):

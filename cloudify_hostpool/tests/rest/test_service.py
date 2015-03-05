@@ -17,30 +17,38 @@ import shutil
 import tempfile
 import os
 import json
+
 import testtools
 
-import cloudify_hostpool.rest
 from cloudify_hostpool.tests import rest
-
-# Tests expect to initialise backend themselves, in a nondefault way.
-cloudify_hostpool.rest.DO_INIT_BACKEND = False
 
 
 class ServiceTest(testtools.TestCase):
 
+    _workdir = None
+
     def setUp(self):
         super(ServiceTest, self).setUp()
-        from cloudify_hostpool.rest import service
-        tempdir = tempfile.mkdtemp()
+        self._workdir = tempfile.mkdtemp()
+        os.chdir(self._workdir)
         config_file = os.path.join(
             os.path.dirname(rest.__file__),
             'resources',
             'host-pool.yaml'
         )
-        shutil.copy(config_file, tempdir)
-        os.chdir(tempdir)
-        service._init_backend()
+        os.environ['HOST_POOL_SERVICE_CONFIG_PATH'] = config_file
+        from cloudify_hostpool.rest import service
+
+        # flask feature, should provider more detailed errors
+        service.app.config['TESTING'] = True
+
+        # force database initial load
+        service.reset_backend()
         self.app = service.app.test_client()
+
+    def tearDown(self):
+        super(ServiceTest, self).tearDown()
+        shutil.rmtree(self._workdir)
 
     def test_list_hosts(self):
         result = self.app.get('/hosts')
