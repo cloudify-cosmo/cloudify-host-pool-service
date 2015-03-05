@@ -41,10 +41,16 @@ class RestBackend(object):
     def __init__(self, pool, storage=None):
         self.storage = sqlite.SQLiteStorage(storage)
         # allow only one process to do the initial load
+
+        def _create_indicator():
+            fd = os.open(INDICATOR, os.O_WRONLY |
+                         os.O_CREAT | os.O_EXCL, 0600)
+            os.close(fd)
+
         with FLock:
             if not os.path.exists(INDICATOR):
                 self._load_pool(pool)
-                open(INDICATOR, 'a').close()
+                _create_indicator()
 
     def _load_pool(self, pool):
         config_loader = yaml_pool.YAMLPoolLoader(pool)
