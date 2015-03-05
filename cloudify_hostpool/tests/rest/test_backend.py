@@ -17,6 +17,9 @@ import os
 import tempfile
 import threading
 import unittest
+import shutil
+from contextlib import contextmanager
+from multiprocessing import process
 
 import mock
 
@@ -43,14 +46,39 @@ class RestBackendTest(unittest.TestCase):
     NUMBER_OF_HOSTS = 5
 
     def setUp(self):
-        pool = {'hosts': self._generate_hosts(self.NUMBER_OF_HOSTS)}
-        fd, self.db_tmp = tempfile.mkstemp()
-        os.close(fd)
-        self.backend = RestBackend(pool=pool, db_file_name=self.db_tmp)
+        self._workdir = tempfile.mkdtemp()
+        os.chdir(self._workdir)
+        self.backend = self._init_backend()
 
     def tearDown(self):
-        if os.path.exists(self.db_tmp):
-            os.unlink(self.db_tmp)
+        shutil.rmtree(self._workdir)
+
+    def _init_backend(self, hosts=None):
+        if hosts is None:
+            hosts = self._generate_hosts(self.NUMBER_OF_HOSTS)
+        return RestBackend(pool={'hosts': hosts})
+
+    @contextmanager
+    def _backend(self, hosts=None, chdir=True):
+
+        """
+        this context manager is meant for tests that require backend
+        instantiation in addition to the one that happens in setUp.
+        """
+
+        # we will usually want to change directory when we initialize an
+        # instance of the backend class. this is because if the instance is
+        # instantiated from within a directory where a previous
+        # instantiation happened, then the pool loading will not happen.
+        # this is because this directory will contain the initial load
+        # indicator file which will prevent additional loading.
+        # see cloudify_hostpool.rest.backend
+
+        workdir = tempfile.mkdtemp()
+        if chdir:
+            os.chdir(workdir)
+        yield self._init_backend(hosts=hosts)
+        shutil.rmtree(workdir)
 
     def _generate_hosts(self, count):
         return map(lambda i: {
@@ -166,36 +194,73 @@ class RestBackendTest(unittest.TestCase):
     @mock.patch('cloudify_hostpool.rest.backend.scan.scan',
                 _mock_scan_alive)
     def test_get_keyfile(self):
+
         """
         Test checking if key is properly read from the file and attached to
         the host structure instead of the key's file path.
         """
+
         key_mock = 'test_key'
-        host_id = 'test_id'
-        keyfile = 'key.pem'
+        keyfile = os.path.join(self._workdir, 'key.pem')
         host_with_key = {
             'host': '127.0.0.1',
             'port': '22',
-            'auth': {'username': 'user', 'keyfile': keyfile},
-            'host_id': host_id,
-            'alive': True,
-            'reserved': False
+            'auth': {'username': 'user', 'keyfile': keyfile}
         }
+
         with open(keyfile, 'w') as f:
             f.write(key_mock)
-        new_db = tempfile.NamedTemporaryFile()
-        try:
-            """
-            New instance of RestBackend is being created to make sure that
-            there is one and only host in storage with given key content that
-            is to be acquired.
-            """
-            backend = RestBackend(pool={'hosts': [host_with_key, ]},
-                                  db_file_name=new_db.name)
+
+        # a new instance of RestBackend is being created to make sure that
+        # there is one and only host in storage with given key content that
+        # is to be acquired.
+
+        with self._backend(hosts=[host_with_key]) as backend:
             host = backend.acquire_host()
             self.assertEqual(host['auth']['keyfile'], key_mock)
             host = backend.get_host(host['host_id'])
             self.assertEqual(host['auth']['keyfile'], key_mock)
-        finally:
-            if os.path.exists(keyfile):
-                os.unlink(keyfile)
+
+    def test_concurrent_initialization(self):
+
+        processes = []
+
+        os.chdir(tempfile.mkdtemp())
+
+        def _initialize():
+            self._init_backend()
+
+        for i in range(20):
+            # we use processes here instead of threads because file locks do
+            # not respect thread access. this simulates a scenario where
+            # gunicorn (or any other container) runs this flask application
+            # with multiple workers
+            p = process.Process(target=_initialize)
+            processes.append(p)
+
+        for p in processes:
+            p.start()
+
+        for p in processes:
+            p.join()
+
+        # connect to the underlying storage to make assertions
+        backend = self._init_backend()
+        self.assertEqual(len(backend.storage.get_hosts()),
+                         self.NUMBER_OF_HOSTS)
+
+    def test_sequentual_initialization(self):
+
+        # this changes directory and initializes
+        with self._backend() as backend1:
+
+            # now initialize another instance from the same directory
+            backend2 = self._init_backend()
+
+            # assert pool loading was done only once
+            self.assertEqual(backend1.storage._filename,
+                             backend2.storage._filename)
+            self.assertEqual(backend1.storage.get_hosts(),
+                             backend2.storage.get_hosts())
+            self.assertEqual(len(backend1.storage.get_hosts()),
+                             self.NUMBER_OF_HOSTS)

@@ -1,8 +1,9 @@
-default:
-  auth:
-    username: x
-  port: 123
+pool:
+  default:
+    auth:
+      username: x
+    port: 123
 
-hosts:
-  - host: google.com
-    port: 80
+  hosts:
+    - host: google.com
+      port: 80

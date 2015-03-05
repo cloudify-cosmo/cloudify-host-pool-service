@@ -13,21 +13,31 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from setuptools import setup
 
-setup(
-    name='cloudify-host-pool-service',
-    version='1.0',
-    license='LICENSE',
-    packages=['cloudify_hostpool.storage',
-              'cloudify_hostpool.config',
-              'cloudify_hostpool.hosts',
-              'cloudify_hostpool.rest'],
-    description='Cloudify Host Pool Service',
-    install_requires=[
-        'flask',
-        'flask_restful',
-        'PyYAML',
-        'filelock==0.2.0'
-    ]
-)
+class Config(object):
+
+    def __init__(self, config):
+        self._config = config
+        self._validate(config)
+
+    @staticmethod
+    def _validate(config):
+        if 'pool' not in config:
+            raise RuntimeError("'pool' property is missing from the "
+                               "configuration")
+
+    @property
+    def pool(self):
+        return self._config['pool']
+
+_instance = None
+
+
+def configure(config):
+    global _instance
+    _instance = Config(config)
+
+
+def get():
+    global _instance
+    return _instance
