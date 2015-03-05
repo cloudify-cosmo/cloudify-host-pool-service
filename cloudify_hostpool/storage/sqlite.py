@@ -23,7 +23,6 @@ from collections import namedtuple
 
 from cloudify_hostpool.storage.base import Storage
 from cloudify_hostpool import exceptions
-from cloudify_hostpool.rest import config
 
 
 class SQLiteSchema(object):
