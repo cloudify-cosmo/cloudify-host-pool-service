@@ -1,0 +1,42 @@
+tosca_definitions_version: cloudify_dsl_1_1
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.2m8/types.yaml
+  - host-pool-service.yaml
+
+
+inputs:
+
+  host_pool_public_address:
+    type: string
+
+  host_pool_ssh_user:
+    type: string
+    default: ubuntu
+
+  host_pool_ssh_key_path:
+    type: string
+    default: /home/ubuntu/.ssh/id_rsa
+
+  host_pool_directory:
+    type: string
+    default: /home/ubuntu/host_pool
+
+
+node_templates:
+  host_pool_host:
+    type: cloudify.nodes.Compute
+    properties:
+      install_agent: false
+      ip: { get_input: host_pool_public_address }
+
+  host_pool_server:
+    type: cloudify.nodes.HostPoolService
+    properties:
+      directory: { get_input: host_pool_directory }
+      ssh_host: { get_input: host_pool_public_address }
+      ssh_user: { get_input: host_pool_ssh_user }
+      ssh_key_path: { get_input: host_pool_ssh_key_path }
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host_pool_host
