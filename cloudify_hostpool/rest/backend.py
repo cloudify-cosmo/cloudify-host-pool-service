@@ -97,7 +97,8 @@ class RestBackend(object):
             if not host_alive:
                 self.storage.update_host(
                     host['global_id'],
-                    {'reserved': False})
+                    {'reserved': False,
+                     'alive': False})
                 continue
 
             # if the host is alive, this is our host.
@@ -105,7 +106,8 @@ class RestBackend(object):
                 hst, _ = self.storage.update_host(
                     host['global_id'],
                     {'reserved': False,
-                     'host_id': str(uuid.uuid4())})
+                     'host_id': str(uuid.uuid4()),
+                     'alive': True})
                 self._load_keyfile(hst)
                 return hst
 
