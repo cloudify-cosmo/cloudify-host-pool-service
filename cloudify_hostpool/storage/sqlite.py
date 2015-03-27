@@ -85,10 +85,7 @@ class SQLiteStorage(Storage):
         if storage is None:
             storage = 'host-pool-data.sqlite'
         self._filename = os.path.abspath(storage)
-        self._schema = SQLiteSchema(
-            primary_key_name='global_id',
-            primary_key_type='integer'
-        )
+        self._schema = _create_schema()
         self._create_table()
 
     @contextmanager
@@ -145,19 +142,25 @@ class SQLiteStorage(Storage):
             return cursor.fetchone(), changed
 
     def _create_table(self):
-
-        self._schema.add_column('host_id', 'text')
-        self._schema.add_column('host', 'text')
-        self._schema.add_column('public_address', 'text')
-        self._schema.add_column('auth', 'text')
-        self._schema.add_column('port', 'text')
-        self._schema.add_column('alive', 'integer')
-        self._schema.add_column('reserved', 'integer')
-
         with self.connect() as cursor:
             sql = 'CREATE TABLE IF NOT EXISTS {0} {1}'.format(
                 self.TABLE_NAME, self._schema.create())
             cursor.execute(sql)
+
+
+def _create_schema():
+    schema = SQLiteSchema(
+        primary_key_name='global_id',
+        primary_key_type='integer'
+    )
+    schema.add_column('host_id', 'text')
+    schema.add_column('host', 'text')
+    schema.add_column('public_address', 'text')
+    schema.add_column('auth', 'text')
+    schema.add_column('port', 'text')
+    schema.add_column('alive', 'integer')
+    schema.add_column('reserved', 'integer')
+    return schema
 
 
 def _dict_row_factory(cursor, row):
