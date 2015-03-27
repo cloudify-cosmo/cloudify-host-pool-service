@@ -165,19 +165,11 @@ def _dict_row_factory(cursor, row):
     def _normalize_port(value):
         return int(value)
 
-    def _get_bool(value):
-        if value == 1:
-            return True
-        return False
-
-    def _get_dict(value):
-        return json.loads(value)
-
     custom_parsers = {
-        'auth': _get_dict,
+        'auth': json.loads,
         'port': _normalize_port,
-        'alive': _get_bool,
-        'reserved': _get_bool,
+        'alive': lambda v: v != 0,
+        'reserved': lambda v: v != 0
     }
 
     result = {}
