@@ -88,26 +88,38 @@ class RestBackend(object):
             if not reserved:
                 continue
 
-            # if we did manager to reserve it,
-            # check its state
-            host_alive = self._is_alive(host)
+            try:
 
-            # if the host is dead, delete the
-            # reservation and move on
-            if not host_alive:
-                self.storage.update_host(
-                    host['global_id'],
-                    {'reserved': False})
-                continue
+                # if we did manager to reserve it,
+                # check its state
+                host_alive = self._is_alive(host)
 
-            # if the host is alive, this is our host.
-            if host_alive:
-                hst, _ = self.storage.update_host(
-                    host['global_id'],
-                    {'reserved': False,
-                     'host_id': str(uuid.uuid4())})
-                self._load_keyfile(hst)
-                return hst
+                # if the host is dead, delete the
+                # reservation and move on
+                if not host_alive:
+                    self.storage.update_host(
+                        host['global_id'],
+                        {'reserved': False})
+                    reserved = False
+                    continue
+
+                # if the host is alive, this is our host.
+                if host_alive:
+                    hst, _ = self.storage.update_host(
+                        host['global_id'],
+                        {'reserved': False,
+                         'host_id': str(uuid.uuid4())})
+                    reserved = False
+                    self._load_keyfile(hst)
+                    return hst
+
+            finally:
+                # if the host is still somehow reserved (unexpected exception
+                # thrown), release it
+                if reserved:
+                    self.storage.update_host(
+                        host['global_id'],
+                        {'reserved': False})
 
         # we didn't manager to acquire any host
         raise exceptions.NoHostAvailableException()
