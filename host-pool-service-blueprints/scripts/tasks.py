@@ -1,4 +1,5 @@
 import itertools
+import os.path
 import StringIO
 
 import fabric.api
@@ -33,23 +34,34 @@ def configure(directory, environment=None):
     config_filename = env.get('HOST_POOL_CONFIG', 'host-pool.yaml')
     pool_config = cloudify.ctx.get_resource(
         'resources/{0}'.format(config_filename))
-    keys = _get_key_paths(pool_config)
+    keys, key_dirs = _get_key_dirs_and_paths(pool_config)
     with fabric.context_managers.cd(directory):
         f = StringIO.StringIO(pool_config)
         f.name = config_filename
         fabric.api.put(f, config_filename)
+        if key_dirs:
+            fabric.api.run('mkdir -p {0}'.format(' '.join(key_dirs)))
         for key in keys:
             _sftp_resource_copy('resources/{0}'.format(key), key)
 
 
-def _get_key_paths(pool_config):
-    keys = set()
+def _get_key_dirs_and_paths(pool_config):
     pool = yaml.load(pool_config).get('pool', {})
+    keys = set()
+    key_dirs = set()
     for entry in itertools.chain([pool.get('default', {})],
                                  pool.get('hosts', [])):
         if 'auth' in entry and entry['auth'].get('keyfile') is not None:
             keys.add(entry['auth']['keyfile'])
-    return keys
+    for key in keys:
+        d = os.path.dirname(key)
+        if d == '':
+            continue
+        if d[0] == '/':
+            raise Exception(
+                '\'{0}\': absolute paths are not supported!'.format(key))
+        key_dirs.add(d)
+    return keys, key_dirs
 
 
 def _ensure_dependencies_installed():

@@ -3,18 +3,7 @@
 #
 # Rewrite it to suit your needs.
 #
-#
-# Known issues
-# ------------
-#
-# Currently key files are **not** automatically uploaded. Host pool will
-# **not** run if a keyfile is used in the configuration file.
-# To use keyfiles:
-# * first install the service with any valid configuration file,
-# * then stop it,
-# * add keys manually,
-# * alter the configuration to actually use your key files
-# * and start the service.
+# NOTE: Key files **must** be relative to this file!
 ########################################################################
 
 
