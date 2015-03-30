@@ -1,7 +1,10 @@
+import itertools
 import StringIO
 
 import fabric.api
 import fabric.context_managers
+
+import yaml
 
 import cloudify
 
@@ -30,10 +33,23 @@ def configure(directory, environment=None):
     config_filename = env.get('HOST_POOL_CONFIG', 'host-pool.yaml')
     pool_config = cloudify.ctx.get_resource(
         'resources/{0}'.format(config_filename))
+    keys = _get_key_paths(pool_config)
     with fabric.context_managers.cd(directory):
         f = StringIO.StringIO(pool_config)
         f.name = config_filename
         fabric.api.put(f, config_filename)
+        for key in keys:
+            _sftp_resource_copy('resources/{0}'.format(key), key)
+
+
+def _get_key_paths(pool_config):
+    keys = set()
+    pool = yaml.load(pool_config).get('pool', {})
+    for entry in itertools.chain([pool.get('default', {})],
+                                 pool.get('hosts', [])):
+        if 'auth' in entry and entry['auth'].get('keyfile') is not None:
+            keys.add(entry['auth']['keyfile'])
+    return keys
 
 
 def _ensure_dependencies_installed():
