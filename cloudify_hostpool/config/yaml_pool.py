@@ -140,5 +140,5 @@ def _get_subnet_and_mask(ip_range):
 def _get_subnet_hosts(subnet, mask):
     bin_sub = _ip2long(subnet)
     bin_broadcast = _get_broadcast_long(subnet, mask)
-    for address in range(bin_sub + 1, bin_broadcast):
+    for address in xrange(bin_sub + 1, bin_broadcast):
         yield _long2ip(address)
