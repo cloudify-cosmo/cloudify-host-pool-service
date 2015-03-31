@@ -166,7 +166,14 @@ def _create_schema():
 def _dict_row_factory(cursor, row):
 
     def _normalize_port(value):
-        return int(value)
+        try:
+            return int(value)
+        except ValueError:
+            if isinstance(value, unicode):
+                return str(value)
+            if isinstance(value, str):
+                return value
+            raise
 
     def _get_bool(value):
         if value == 1:
