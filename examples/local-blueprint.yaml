@@ -1,0 +1,34 @@
+tosca_definitions_version: cloudify_dsl_1_0
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.2m8/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/master/host-pool-service.yaml
+
+
+inputs:
+
+  pool:
+    type: string
+    description: relative path to a pool configuration file
+  directory:
+    type: string
+    description: |
+      absolute path to a directory where the service will be
+      running from
+
+node_templates:
+
+  host:
+    type: cloudify.nodes.Compute
+    properties:
+      install_agent: false
+      ip: localhost
+
+  host_pool_service:
+    type: cloudify.nodes.HostPoolService
+    properties:
+      directory: { get_input: directory }
+      pool: { get_input: pool }
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host

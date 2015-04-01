@@ -1,0 +1,31 @@
+#####################################################
+# An exemple Host pool service configuration file.
+#
+# Rewrite it to suit your needs.
+#####################################################
+
+
+default:
+
+  # These properties will be applied to any host that does not define a
+  # property explicitly
+
+  port: 22
+  auth:
+    username: ubuntu
+    password: password
+
+hosts:
+
+  # 1 box defined with a private key file. file paths must be relative to the
+  # location of this file
+  # machines specified using CIDR notation must share configuration
+
+  - host: 127.0.0.1
+    keyfile: keys/key.pem
+
+  # 4 boxes defined by CIDR (mask) using custom config
+  # machines specified using CIDR notation must share configuration
+
+  - ip_range: 192.168.101.16/30
+    port: 80
