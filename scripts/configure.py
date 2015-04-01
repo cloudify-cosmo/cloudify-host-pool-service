@@ -50,4 +50,3 @@ for key_file in key_files:
     ctx.download_resource(key_file, target_path)
 
 ctx.instance.runtime_properties['config_path'] = config_path
-

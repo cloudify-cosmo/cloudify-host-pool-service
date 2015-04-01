@@ -59,4 +59,3 @@ class ExamplesTest(testtools.TestCase):
         # query the service to make sure its not working
         self.assertRaises(ConnectionError, requests.get,
                           'http://localhost:8080/hosts')
-
