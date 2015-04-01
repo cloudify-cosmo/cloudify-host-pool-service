@@ -7,6 +7,9 @@
 
 default:
 
+  # These properties will be applied to any host that does not define a
+  # property explicitly
+
   port: 22
   auth:
     username: ubuntu
