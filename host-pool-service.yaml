@@ -30,24 +30,24 @@ node_types:
           implementation: script.script_runner.tasks.run
           inputs:
             script_path:
-              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/scripts/create.sh
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/CFY-2209-node-type-separation/scripts/create.sh
         configure:
           implementation: script.script_runner.tasks.run
           inputs:
             script_path:
               default: scripts/configure.sh
         start:
-          implementation: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/script.script_runner.tasks.run
+          implementation: script.script_runner.tasks.run
           inputs:
             script_path:
-              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/scripts/start.sh
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/CFY-2209-node-type-separation/scripts/start.sh
         stop:
           implementation: script.script_runner.tasks.run
           inputs:
             script_path:
-              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/scripts/stop.sh
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/CFY-2209-node-type-separation/scripts/stop.sh
         delete:
           implementation: script.script_runner.tasks.run
           inputs:
             script_path:
-              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/scripts/delete.sh
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/CFY-2209-node-type-separation/scripts/delete.sh
