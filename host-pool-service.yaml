@@ -35,7 +35,7 @@ node_types:
           implementation: script.script_runner.tasks.run
           inputs:
             script_path:
-              default: scripts/configure.sh
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/CFY-2209-node-type-separation/scripts/configure.sh
         start:
           implementation: script.script_runner.tasks.run
           inputs:
