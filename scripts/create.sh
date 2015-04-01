@@ -21,10 +21,10 @@ ctx logger info "Creating virtualenv"
 virtualenv ${env_directory}
 . ${env_directory}/bin/activate
 
-ctx logger info "Installing cloudify-host-pool-service"
-pip install ${SOURCE}
 ctx logger info "Installing gunicorn"
 pip install gunicorn
+ctx logger info "Installing cloudify-host-pool-service"
+pip install ${SOURCE}
 
 ctx instance runtime-properties work_directory ${work_directory}
 ctx instance runtime-properties env_directory ${env_directory}
