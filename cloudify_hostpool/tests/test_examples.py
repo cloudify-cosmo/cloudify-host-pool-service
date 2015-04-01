@@ -24,6 +24,14 @@ from requests.exceptions import ConnectionError
 from cloudify.workflows import local
 
 
+IGNORED_LOCAL_WORKFLOW_MODULES = (
+    'worker_installer.tasks',
+    'plugin_installer.tasks',
+    'windows_agent_installer.tasks',
+    'windows_plugin_installer.tasks'
+)
+
+
 class ExamplesTest(testtools.TestCase):
 
     def test_local_blueprint(self):
@@ -38,7 +46,8 @@ class ExamplesTest(testtools.TestCase):
 
         env = local.init_env(
             blueprint_path=blueprint_path,
-            inputs={'directory': tempdir, 'pool': 'pool.yaml'})
+            inputs={'directory': tempdir, 'pool': 'pool.yaml'},
+            ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
 
         env.execute('install', task_retries=0)
         self._post_install_assertions()

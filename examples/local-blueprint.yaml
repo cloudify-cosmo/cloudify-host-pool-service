@@ -23,6 +23,7 @@ node_templates:
     properties:
       install_agent: false
       ip: localhost
+
   host_pool_service:
     type: cloudify.nodes.HostPoolService
     properties:
