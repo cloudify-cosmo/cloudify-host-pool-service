@@ -7,10 +7,10 @@
 
 default:
 
-    port: 22
-    auth:
-        username: ubuntu
-        password: password
+  port: 22
+  auth:
+    username: ubuntu
+    password: password
 
 hosts:
 
