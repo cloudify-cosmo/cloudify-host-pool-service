@@ -1,8 +1,5 @@
 #!/bin/bash -e
 
-python=$(which python)
-
-echo ${python} > /home/elip/dev/python.txt
 SOURCE=$(ctx node properties source)
 
 directory=$(ctx node properties directory)
