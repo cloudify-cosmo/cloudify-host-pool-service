@@ -14,9 +14,49 @@
 # * limitations under the License.
 
 import testtools
+import os
+import cloudify_hostpool
+import requests
+import tempfile
+from requests.exceptions import ConnectionError
+
+
+from cloudify.workflows import local
 
 
 class ExamplesTest(testtools.TestCase):
 
     def test_local_blueprint(self):
-        self.fail('Not implemented')
+
+        tempdir = tempfile.mkdtemp(prefix='cloudify-host-pool-service')
+
+        blueprint_path = os.path.join(
+            os.path.dirname(os.path.dirname(cloudify_hostpool.__file__)),
+            'examples',
+            'local-blueprint.yaml'
+        )
+
+        env = local.init_env(
+            blueprint_path=blueprint_path,
+            inputs={'directory': tempdir, 'pool': 'pool.yaml'})
+
+        env.execute('install', task_retries=0)
+        self._post_install_assertions()
+        env.execute('uninstall')
+        self._post_uninstall_assertions()
+
+    def _post_install_assertions(self):
+
+        # query the service to make sure its working
+        response = requests.get('http://localhost:8080/hosts')
+        hosts = response.json()['hosts']
+
+        # no hosts were acquired
+        self.assertEqual([], hosts)
+
+    def _post_uninstall_assertions(self):
+
+        # query the service to make sure its not working
+        self.assertRaises(ConnectionError, requests.get,
+                          'http://localhost:8080/hosts')
+

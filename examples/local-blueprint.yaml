@@ -5,6 +5,17 @@ imports:
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/CFY-2209-node-type-separation/host-pool-service.yaml
 
 
+inputs:
+
+  pool:
+    type: string
+    description: relative path to a pool configuration file
+  directory:
+    type: string
+    description: |
+      absolute path to a directory where the service will be
+      running from
+
 node_templates:
 
   host:
@@ -15,8 +26,8 @@ node_templates:
   host_pool_service:
     type: cloudify.nodes.HostPoolService
     properties:
-      directory: /tmp/host-pool-service
-      pool: pool.yaml
+      directory: { get_input: directory }
+      pool: { get_input: pool }
     relationships:
       - type: cloudify.relationships.contained_in
         target: host

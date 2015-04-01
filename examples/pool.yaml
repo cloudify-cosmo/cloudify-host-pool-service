@@ -11,7 +11,7 @@ default:
     auth:
         username: ubuntu
         password: password
-        keyfi
+
 hosts:
 
   # 1 box defined with a private key file. file paths must be relative to the
