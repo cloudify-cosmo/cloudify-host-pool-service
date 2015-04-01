@@ -10,11 +10,13 @@ inputs:
   pool:
     type: string
     description: relative path to a pool configuration file
+    default: pool.yaml
   directory:
     type: string
     description: |
       absolute path to a directory where the service will be
       running from
+    default: /tmp
 
 node_templates:
 

@@ -46,7 +46,7 @@ class ExamplesTest(testtools.TestCase):
 
         env = local.init_env(
             blueprint_path=blueprint_path,
-            inputs={'directory': tempdir, 'pool': 'pool.yaml'},
+            inputs={'directory': tempdir},
             ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
 
         env.execute('install', task_retries=0)
