@@ -1,0 +1,70 @@
+tosca_definitions_version: cloudify_dsl_1_0
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.2m8/types.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/host-pool-service.yaml
+
+
+node_types:
+
+  cloudify.nodes.HostPoolService:
+    derived_from: cloudify.nodes.SoftwareComponent
+    properties:
+      directory:
+        type: string
+        default: /home/ubuntu/host_pool
+        description: Directory to run the service from
+      pool:
+        type: string
+        description: Path to the pool YAML configuration file
+      port:
+        type: integer
+        description: Port to bind to
+        default: 8080
+      source:
+        type: string
+        description: URL to the source code of the service
+        default: https://github.com/cloudify-cosmo/cloudify-host-pool-service/archive/master.zip
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          implementation: script.script_runner.tasks.run
+          inputs:
+            script_path:
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/scripts/create.sh
+        configure:
+          implementation: script.script_runner.tasks.run
+          inputs:
+            script_path:
+              default: scripts/configure.sh
+        start:
+          implementation: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/script.script_runner.tasks.run
+          inputs:
+            script_path:
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/scripts/start.sh
+        stop:
+          implementation: script.script_runner.tasks.run
+          inputs:
+            script_path:
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/scripts/stop.sh
+        delete:
+          implementation: script.script_runner.tasks.run
+          inputs:
+            script_path:
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/scripts/delete.sh
+
+node_templates:
+
+  host:
+    type: cloudify.nodes.Compute
+    properties:
+      install_agent: false
+      ip: localhost
+  host_pool_service:
+    type: cloudify.nodes.HostPoolService
+    properties:
+      directory: /tmp/host-pool-service
+      pool: pool.yaml
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host

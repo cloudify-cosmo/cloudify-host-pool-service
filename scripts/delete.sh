@@ -7,12 +7,7 @@ _error(){
 }
 
 
-[ $# -lt 1 ] && _error "Missing argument."
-
-declare -r _host_pool_dir=$1
-
-shift
-[ $# -gt 0 ] && _error "Unexpected arguments: '$@'."
+declare -r _host_pool_dir=$(ctx node properties directory)
 
 [ -d "${_host_pool_dir}" ] || \
     _error "Host pool's directory '${_host_pool_dir}' does not exist!"
