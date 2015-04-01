@@ -2,7 +2,7 @@ tosca_definitions_version: cloudify_dsl_1_0
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/3.2m8/types.yaml
-  - /home/elip/dev/src/cloudify-cosmo/cloudify-host-pool-service/host-pool-service.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/CFY-2209-node-type-separation/host-pool-service.yaml
 
 
 inputs:
