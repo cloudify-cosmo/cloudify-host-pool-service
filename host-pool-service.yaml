@@ -1,9 +1,3 @@
-tosca_definitions_version: cloudify_dsl_1_0
-
-imports:
-  - http://www.getcloudify.org/spec/cloudify/3.2m8/types.yaml
-
-
 node_types:
 
   cloudify.nodes.HostPoolService:
