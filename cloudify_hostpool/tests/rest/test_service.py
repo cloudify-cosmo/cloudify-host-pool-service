@@ -29,6 +29,7 @@ class ServiceTest(testtools.TestCase):
 
     def setUp(self):
         super(ServiceTest, self).setUp()
+        self.original_dir = os.getcwd()
         self._workdir = tempfile.mkdtemp()
         os.chdir(self._workdir)
         config_file = os.path.join(
@@ -48,6 +49,7 @@ class ServiceTest(testtools.TestCase):
 
     def tearDown(self):
         super(ServiceTest, self).tearDown()
+        os.chdir(self.original_dir)
         shutil.rmtree(self._workdir)
 
     def test_list_hosts(self):

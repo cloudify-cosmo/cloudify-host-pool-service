@@ -16,7 +16,7 @@
 import os
 import tempfile
 import threading
-import unittest
+import testtools
 import shutil
 from contextlib import contextmanager
 from multiprocessing import process
@@ -41,16 +41,20 @@ def _mock_scan_dead(endpoints, _=None):
     return result
 
 
-class RestBackendTest(unittest.TestCase):
+class RestBackendTest(testtools.TestCase):
 
     NUMBER_OF_HOSTS = 5
 
     def setUp(self):
+        super(RestBackendTest, self).setUp()
         self._workdir = tempfile.mkdtemp()
+        self.original_dir = os.getcwd()
         os.chdir(self._workdir)
         self.backend = self._init_backend()
 
     def tearDown(self):
+        super(RestBackendTest, self).tearDown()
+        os.chdir(self.original_dir)
         shutil.rmtree(self._workdir)
 
     def _init_backend(self, hosts=None):

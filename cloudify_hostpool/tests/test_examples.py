@@ -18,6 +18,8 @@ import os
 import cloudify_hostpool
 import requests
 import tempfile
+import shutil
+
 from requests.exceptions import ConnectionError
 
 
@@ -34,6 +36,17 @@ IGNORED_LOCAL_WORKFLOW_MODULES = (
 
 class ExamplesTest(testtools.TestCase):
 
+    def setUp(self):
+        super(ExamplesTest, self).setUp()
+        self._workdir = tempfile.mkdtemp()
+        self.original_dir = os.getcwd()
+        os.chdir(self._workdir)
+
+    def tearDown(self):
+        super(ExamplesTest, self).tearDown()
+        os.chdir(self.original_dir)
+        shutil.rmtree(self._workdir)
+
     def test_local_blueprint(self):
 
         tempdir = tempfile.mkdtemp(prefix='cloudify-host-pool-service')
@@ -41,6 +54,7 @@ class ExamplesTest(testtools.TestCase):
         blueprint_path = os.path.join(
             os.path.dirname(os.path.dirname(cloudify_hostpool.__file__)),
             'examples',
+            'local-blueprint',
             'local-blueprint.yaml'
         )
 
