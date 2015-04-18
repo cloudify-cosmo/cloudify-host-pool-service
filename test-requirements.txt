@@ -2,7 +2,6 @@ mock>=1.0.1
 subprocess32>=3.2.6
 testtools
 requests<=2.5.1
-nose
 https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/master.zip
 https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/master.zip
 https://github.com/cloudify-cosmo/cloudify-rest-client/archive/master.zip
