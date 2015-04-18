@@ -3,13 +3,13 @@ node_types:
   cloudify.nodes.HostPoolService:
     derived_from: cloudify.nodes.SoftwareComponent
     properties:
-      directory:
-        type: string
-        default: /home/ubuntu/host_pool
-        description: Directory to run the service from
       pool:
         type: string
         description: Path to the pool YAML configuration file
+      directory:
+        type: string
+        default: /tmp/cloudify-host-pool-service
+        description: Directory to run the service from
       port:
         type: integer
         description: Port to bind to
