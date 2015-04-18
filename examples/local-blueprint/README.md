@@ -1,14 +1,9 @@
-Examples
-========
-
-Contains examples on how to write blueprints that install the cloudify-host-pool-service.
-
-**The pool configuration file is located [here](pool.yaml)**
-
 ## Local Blueprint
 
 [This blueprint](local-blueprint.yaml) allows you to install the cloudify-host-pool-service application on your local machine. <br>
 Let see how this is done:
+
+**The pool configuration file is located [here](pool.yaml)**
 
 ### Step 1: Initialize
 
