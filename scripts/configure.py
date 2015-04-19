@@ -11,9 +11,10 @@ config_path = os.path.join(work_directory, 'config.json')
 
 
 def _get_keys():
+    ctx.logger.info('Retrieving Keys')
     with open(pool_config_path) as f:
         pool_json = yaml.load(f)
-    default_key = pool_json.get('default', {}).get('keyfile')
+    default_key = pool_json.get('default', {}).get('auth', {}).get('keyfile')
     keys = set()
     if default_key:
         keys.add(default_key)
