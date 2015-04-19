@@ -66,4 +66,7 @@ ${command}
 
 wait_for_server ${port} 'Host-Pool-Service'
 
+host_ip=$(ctx instance host-ip)
+
 ctx instance runtime-properties pid_file ${work_directory}/gunicorn.pid
+ctx instance runtime-properties private_endpoint "${host_ip}:${port}"
