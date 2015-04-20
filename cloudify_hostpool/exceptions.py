@@ -43,8 +43,8 @@ class NoHostAvailableException(HostPoolHTTPException):
         super(NoHostAvailableException, self).__init__(515)
 
     def __str__(self):
-        return 'Cannot acquire host. The pool is ' \
-               'all hosts are either is use or not responding.'
+        return 'Cannot acquire host. All hosts are either is use or not ' \
+               'responding.'
 
 
 class HostNotFoundException(HostPoolHTTPException):
