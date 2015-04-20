@@ -19,7 +19,7 @@ def _get_keys():
     if default_key:
         keys.add(default_key)
     for host in pool_json['hosts']:
-        key = host.get('keyfile')
+        key = host.get('auth', {}).get('keyfile')
         if key:
             keys.add(key)
     return keys

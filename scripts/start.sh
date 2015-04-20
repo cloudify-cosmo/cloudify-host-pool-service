@@ -35,7 +35,7 @@ function wait_for_server() {
 
     ctx logger info "Running ${server_name} liveness detection on port ${port}"
 
-    for i in $(seq 1 120)
+    for i in $(seq 1 5)
     do
         response_code=$(get_response_code ${port})
         ctx logger info "[GET] http://localhost:${port}/hosts ${response_code}"
@@ -49,6 +49,7 @@ function wait_for_server() {
     done
     if [ ${started} = false ]; then
         ctx logger error "${server_name} failed to start. waited for a 120 seconds."
+        ctx logger error "$(cat ${work_directory}/gunicorn.log)"
         exit 1
     fi
 }
