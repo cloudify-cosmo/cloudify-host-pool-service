@@ -219,3 +219,25 @@ class YAMLPoolLoaderTest(testtools.TestCase):
                                    public_address=None))
         finally:
             os.unlink(good_file)
+
+    def test_merge_auth_dictionary(self):
+
+        hosts = [
+            dict(host='2.2.2.8',
+                 auth={'password': 'pass2'},
+                 port=22)
+        ]
+
+        pool = yaml_pool.YAMLPoolLoader(
+            {
+                'hosts': hosts,
+                'default': {
+                    'auth': {
+                        'username': 'adam'
+                    }
+                }
+            })
+        host = pool.load().next()
+        self.assertEqual(host['auth']['username'], 'adam')
+        self.assertEqual(host['auth']['password'], 'pass2')
+

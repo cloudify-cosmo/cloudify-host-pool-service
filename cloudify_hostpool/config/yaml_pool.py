@@ -77,7 +77,10 @@ class YAMLPoolLoader(Loader):
                     "'host' or the 'ip_range' key")
 
     def _get_auth(self, host):
-        auth = host.get('auth') or self.default.get('auth', {})
+
+        default_auth = self.default.get('auth', {})
+        auth = default_auth.copy()
+        auth.update(host.get('auth', {}))
         keyfile = auth.get('keyfile')
         if keyfile and not os.access(keyfile, os.R_OK):
             raise exceptions.ConfigurationError(
