@@ -17,7 +17,7 @@ from setuptools import setup
 
 setup(
     name='cloudify-host-pool-service',
-    version='3.2rc1',
+    version='1.0',
     license='LICENSE',
     packages=['cloudify_hostpool',
               'cloudify_hostpool.storage',
