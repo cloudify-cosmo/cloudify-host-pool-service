@@ -240,4 +240,3 @@ class YAMLPoolLoaderTest(testtools.TestCase):
         host = pool.load().next()
         self.assertEqual(host['auth']['username'], 'adam')
         self.assertEqual(host['auth']['password'], 'pass2')
-
