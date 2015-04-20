@@ -48,8 +48,7 @@ function wait_for_server() {
         fi
     done
     if [ ${started} = false ]; then
-        ctx logger error "${server_name} failed to start. waited for a 120 seconds."
-        ctx logger error "$(cat ${work_directory}/gunicorn.log)"
+        ctx logger error "${server_name} failed to start: $(cat ${work_directory}/gunicorn.log)"
         exit 1
     fi
 }
