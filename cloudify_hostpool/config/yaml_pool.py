@@ -17,6 +17,7 @@ import os
 import re
 import socket
 import struct
+import copy
 
 import yaml
 
@@ -79,7 +80,7 @@ class YAMLPoolLoader(Loader):
     def _get_auth(self, host):
 
         default_auth = self.default.get('auth', {})
-        auth = default_auth.copy()
+        auth = copy.deepcopy(default_auth)
         auth.update(host.get('auth', {}))
         keyfile = auth.get('keyfile')
         if keyfile and not os.access(keyfile, os.R_OK):
