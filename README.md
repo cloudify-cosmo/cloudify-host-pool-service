@@ -35,7 +35,7 @@ Queries the service for all **allocated** hosts.
 }
 ```
 
-### [GET] /hosts/<host_id>
+### [GET] /hosts/{host_id}
 
 Get information on a specific host. The host id generated while acquiring
 this host must be passed.
@@ -72,7 +72,7 @@ Acquire a host.
 }
 ```
 
-### [DELETE] /hosts/<host_id>
+### [DELETE] /hosts/{host_id}
 
 Release a host by its id. response is the deleted host
 
