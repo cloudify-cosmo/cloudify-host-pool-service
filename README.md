@@ -32,7 +32,8 @@ Queries the service for all **allocated** hosts.
       "port": 22
     }
   ]
-}```
+}
+```
 
 ### [GET] /hosts/<host_id>
 
