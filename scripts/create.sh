@@ -2,15 +2,11 @@
 
 SOURCE=$(ctx node properties source)
 
-directory=$(ctx node properties directory)
-
 work_directory=$(ctx node properties working_directory)
 
-ctx logger info "Creating directory ${directory}"
-mkdir -p ${directory}
-cd ${directory}
-
+ctx logger info "Creating directory ${work_directory}"
 mkdir -p ${work_directory}
+cd ${work_directory}
 
 ctx logger info "Installing gunicorn"
 pip install gunicorn==18.0
