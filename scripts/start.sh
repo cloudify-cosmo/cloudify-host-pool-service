@@ -54,7 +54,7 @@ function wait_for_server() {
 }
 
 
-work_directory=$(ctx instance runtime-properties work_directory)
+work_directory=$(ctx node properties working_directory)
 config_path=$(ctx instance runtime-properties config_path)
 port=$(ctx node properties port)
 
@@ -69,4 +69,4 @@ wait_for_server ${port} 'Host-Pool-Service'
 host_ip=$(ctx instance host-ip)
 
 ctx instance runtime-properties pid_file ${work_directory}/gunicorn.pid
-ctx instance runtime-properties private_endpoint "${host_ip}:${port}"
+ctx instance runtime-properties endpoint "${host_ip}:${port}"

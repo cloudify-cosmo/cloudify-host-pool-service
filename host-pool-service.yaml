@@ -6,7 +6,7 @@ node_types:
       pool:
         type: string
         description: Path to the pool YAML configuration file
-      directory:
+      working_directory:
         type: string
         default: /tmp/cloudify-host-pool-service
         description: Directory to run the service from

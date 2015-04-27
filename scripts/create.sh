@@ -4,7 +4,7 @@ SOURCE=$(ctx node properties source)
 
 directory=$(ctx node properties directory)
 
-work_directory=${directory}
+work_directory=$(ctx node properties working_directory)
 
 ctx logger info "Creating directory ${directory}"
 mkdir -p ${directory}
@@ -19,4 +19,3 @@ pip install pyyaml==3.10
 ctx logger info "Installing cloudify-host-pool-service"
 pip install ${SOURCE}
 
-ctx instance runtime-properties work_directory ${work_directory}

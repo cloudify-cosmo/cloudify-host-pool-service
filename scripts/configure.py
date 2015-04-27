@@ -6,7 +6,7 @@ from cloudify import ctx
 
 
 pool = ctx.node.properties['pool']
-work_directory = ctx.instance.runtime_properties['work_directory']
+work_directory = ctx.node.properties['working_directory']
 config_path = os.path.join(work_directory, 'config.json')
 
 

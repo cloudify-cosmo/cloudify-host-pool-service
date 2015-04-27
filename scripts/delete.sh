@@ -7,7 +7,7 @@ _error(){
 }
 
 
-declare -r _host_pool_dir=$(ctx node properties directory)
+declare -r _host_pool_dir=$(ctx node properties working_directory)
 
 [ -d "${_host_pool_dir}" ] || \
     _error "Host pool's directory '${_host_pool_dir}' does not exist!"
