@@ -51,6 +51,8 @@ cfy local execute -w install
 This command will install all the application components on you local machine.
 (don't worry, its all installed under the `tmp` directory by default)<br>
 Once its done, you should be able to execute a GET request to [http://localhost:8080/hosts](http://localhost:8080/hosts) and see the result.
+**Note that the result should be an empty array, because this request only
+shows allocated hosts.**
 <br>
 
 
