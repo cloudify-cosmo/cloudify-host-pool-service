@@ -21,6 +21,7 @@ from cloudify_hostpool.hosts import scan
 from cloudify_hostpool.storage import sqlite
 from cloudify_hostpool.config import yaml_pool
 from cloudify_hostpool import exceptions
+from cloudify_hostpool import utils
 
 
 # we currently don't expose these in the configuration because its somewhat
@@ -39,8 +40,10 @@ INDICATOR = 'host-pool-loaded-indicator'
 class RestBackend(object):
 
     def __init__(self, pool, storage=None):
+        utils.write_to_log('RestBackend._init__', "Starting...")
         self.storage = sqlite.SQLiteStorage(storage)
         # allow only one process to do the initial load
+        utils.write_to_log('RestBackend._init__', "After SQLiteStorage")
 
         def _create_indicator():
             fd = os.open(INDICATOR, os.O_WRONLY |
@@ -49,14 +52,20 @@ class RestBackend(object):
 
         with FLock:
             if not os.path.exists(INDICATOR):
+                utils.write_to_log('backend.__init__', "path doesn't exist {0}".format(INDICATOR))
                 self._load_pool(pool)
+                utils.write_to_log('backend.__init__', "After _load_pool")
                 _create_indicator()
+                utils.write_to_log('backend.__init__', "After _create_indicator")
 
     def _load_pool(self, pool):
+        utils.write_to_log('backend._load_pool', "Starting...")
         config_loader = yaml_pool.YAMLPoolLoader(pool)
+        utils.write_to_log('backend._load_pool', "after config_loader")
         hosts = config_loader.load()
+        utils.write_to_log('backend._load_pool', "after config_loader.load()")
         for host in hosts:
-
+            utils.write_to_log('backend._load_pool', "host ...")
             # initial values for the hosts.
             # these will update over time.
             host.update({
@@ -64,10 +73,25 @@ class RestBackend(object):
                 'reserved': False,
                 'host_id': None
             })
+            utils.write_to_log('backend._load_pool', "b4 add_host ...")
             self.storage.add_host(host)
+            utils.write_to_log('backend._load_pool', "after add_host")
 
-    def list_hosts(self):
+    def list_hosts(self, all_hosts=False):
+        utils.write_to_log('backend.list_hosts', "Starting...")
         hosts = self.storage.get_hosts()
+        utils.write_to_log('backend.list_hosts', "hosts is empty :{0}".format(hosts is None))
+        if hosts is not None:
+            for curr_host in hosts:
+                utils.write_to_log('backend.list_hosts', "Looping over host {0}".format(str(curr_host)))
+                for curr_key in curr_host:
+                    utils.write_to_log('backend.list_hosts', "host['{0}'] is {1}".
+                    format(curr_key, str(curr_host[curr_key])))
+                utils.write_to_log('backend.list_hosts', "End loop")
+        if all_hosts:
+            utils.write_to_log('backend.list_hosts', "Returning all hosts")
+            return hosts
+        utils.write_to_log('backend.list_hosts', "Returning only allocated hosts")
         return filter(lambda host: host['host_id'], hosts)
 
     def acquire_host(self):
@@ -112,6 +136,7 @@ class RestBackend(object):
                 return hst
 
         # we didn't manager to acquire any host
+        utils.write_to_log('backend.acquire_host', "This service didn't manage to acquire any host")
         raise exceptions.NoHostAvailableException()
 
     def release_host(self, host_id):
@@ -124,6 +149,7 @@ class RestBackend(object):
     def get_host(self, host_id):
         hosts = self.storage.get_hosts(host_id=host_id)
         if len(hosts) == 0:
+            utils.write_to_log('backend.get_host', "hostnotfound len(hosts) is Zero")
             raise exceptions.HostNotFoundException(host_id)
         self._load_keyfile(hosts[0])
         return hosts[0]
@@ -160,5 +186,6 @@ class RestBackend(object):
         if host['auth'].get('keyfile'):
             keyfile = host['auth']['keyfile']
             with open(keyfile) as f:
+                utils.write_to_log('backend._load_keyfile', "'reading keyfile {0}".format(keyfile))
                 content = f.read()
                 host['auth']['keyfile'] = content

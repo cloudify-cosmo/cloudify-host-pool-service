@@ -24,7 +24,6 @@ default:
   port: 22
   auth:
     username: root
-    password: dummypassword
 
 hosts:
   
@@ -48,25 +47,24 @@ hosts:
   ###########################################################################
 
 
-  - host: 10.144.37.71
+  - host: vm1
     auth: 
       username: root
       password: Fnng5gfj
     public_address: 10.144.37.71
 
-  - host: 192.168.101.16/30
-    auth: 
-      username: root
+  - host: vm2
+    auth:
       password: FuVR5TpM
+    public_address: 10.144.37.72
 
-  - host: 10.144.37.80
+  - host: vm3
     auth: 
       username: root
       password: A2qTxTf9
     public_address: 10.144.37.80
 
-  - host: 10.144.37.83
-    auth: 
-      username: root
-      password: YGu27fAn
+  - host: vm4
+    auth:
+      keyfile: mykey.pem
     public_address: 10.144.37.83

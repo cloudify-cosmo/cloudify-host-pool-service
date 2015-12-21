@@ -27,7 +27,7 @@ def _get_keys():
 
 def download_pool_config():
     _pool_config = os.path.join(work_directory, os.path.basename(pool))
-    ctx.logger.info('Downloading pool configuration file')
+    ctx.logger.info("Downloading pool configuration file {0}...".format(_pool_config))
     ctx.download_resource(pool, target_path=_pool_config)
     return _pool_config
 
@@ -36,7 +36,7 @@ def write_host_pool_config_file():
     config_json = {
         'pool': pool_config_path
     }
-    ctx.logger.info('Creating service configuration file')
+    ctx.logger.info("Creating service configuration file {0}".format(config_path))
     with open(config_path, 'w') as f:
         json.dump(config_json, f, indent=2)
 
@@ -45,8 +45,13 @@ write_host_pool_config_file()
 key_files = _get_keys()
 for key_file in key_files:
     target_path = os.path.join(work_directory, key_file)
+    ctx.logger.info('key {0} is in {1}'.format(key_file, target_path))
     directory = os.path.dirname(target_path)
-    os.makedirs(directory)
+    if not os.path.exists(directory):
+        ctx.logger.info('Creating folder {0}'.format(directory))
+        os.makedirs(directory)
+    else:
+        ctx.logger.info('Folder {0} already exists'.format(directory))
     ctx.logger.info('Downloading keyfile: {0}'.format(key_file))
     ctx.download_resource(key_file, target_path)
 

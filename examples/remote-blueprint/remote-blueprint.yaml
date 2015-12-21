@@ -1,0 +1,48 @@
+tosca_definitions_version: cloudify_dsl_1_2
+
+imports:
+  - http://159.122.190.59:8000/cfy_types330rc1.yaml
+  - http://159.122.190.59:8000/host-pool-service.yaml
+
+
+inputs:
+
+  pool:
+    type: string
+    description: relative path to a pool configuration file
+    default: pool.yaml
+  working_directory:
+    type: string
+    description: |
+      absolute path to a directory where the service will be
+      running from
+    default: /tmp
+
+node_templates:
+
+  host:
+    type: cloudify.nodes.Compute
+    properties:
+      agent_config:
+        user: root
+        password: Ccq4rLQ2
+      ip: localhost
+
+  host_pool_service:
+    type: cloudify.nodes.HostPoolService
+    properties:
+      working_directory: { get_input: working_directory }
+      pool: { get_input: pool }
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: host
+
+outputs:
+  endpoint:
+    description: My application endpoint
+    value:
+      pid_file: { get_attribute: [ host_pool_service, pid_file ] }
+      endpoint: { get_attribute: [ host_pool_service, endpoint ] }
+      allocated_hosts: { get_attribute: [ host_pool_service, allocated_hosts ] }
+      all_hosts: { get_attribute: [ host_pool_service, all_hosts ] }
+      ui_log: { get_attribute: [ host_pool_service, ui_log ] }
