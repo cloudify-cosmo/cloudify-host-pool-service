@@ -16,32 +16,32 @@ node_types:
         default: 8080
       source:
         type: string
-        description: URL of the wagon file of this sevice. You can run 'wagon create -s ../cloudify-host-pool-service/ --pyver 27' in order to create such a wagon
-        default: http://LOCAL_WEB_SERVER_IP_ADDRESS_WITH_PORT/cloudify_host_pool_service-1.0-py27-none-linux_x86_64-centos-Core.wgn
+        description: URL to the source code of the service
+        default: https://github.com/cloudify-cosmo/cloudify-host-pool-service/archive/master.zip
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
           implementation: script.script_runner.tasks.run
           inputs:
             script_path:
-              default: http://LOCAL_WEB_SERVER_IP_ADDRESS_WITH_PORT/hostpool_create.sh
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/master/scripts/create.sh
         configure:
           implementation: script.script_runner.tasks.run
           inputs:
             script_path:
-              default: http://LOCAL_WEB_SERVER_IP_ADDRESS_WITH_PORT/hostpool_configure.py
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/master/scripts/configure.py
         start:
           implementation: script.script_runner.tasks.run
           inputs:
             script_path:
-              default: http://LOCAL_WEB_SERVER_IP_ADDRESS_WITH_PORT/hostpool_start.sh
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/master/scripts/start.sh
         stop:
           implementation: script.script_runner.tasks.run
           inputs:
             script_path:
-              default: http://LOCAL_WEB_SERVER_IP_ADDRESS_WITH_PORT/hostpool_stop.sh
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/master/scripts/stop.sh
         delete:
           implementation: script.script_runner.tasks.run
           inputs:
             script_path:
-              default: http://LOCAL_WEB_SERVER_IP_ADDRESS_WITH_PORT/hostpool_delete.sh
+              default: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/master/scripts/delete.sh
