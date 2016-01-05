@@ -60,18 +60,7 @@ port=$(ctx node properties port)
 
 cd ${work_directory}
 export HOST_POOL_SERVICE_CONFIG_PATH=${config_path}
-
-DPLID=$(ctx deployment id)
-currVenv=/root/${DPLID}/env
-ctx logger info "deployment_id is ${DPLID}, virtual env is ${currVenv}"
-gunicornPath=${currVenv}/bin/gunicorn
-ctx logger info "gunicornPath is ${gunicornPath}"
-
-export HOST_POOL_LOG_FILE=${work_directory}/hostpool${DPLID}.log
-ctx logger info "HOST_POOL_LOG_FILE is ${HOST_POOL_LOG_FILE}"
-rm -rf ${HOST_POOL_LOG_FILE}
-
-command="${gunicornPath} --workers=5 --pid=${work_directory}/gunicorn.pid --log-level=INFO --log-file=${work_directory}/gunicorn.log --bind 0.0.0.0:${port} --daemon cloudify_hostpool.rest.service:app"
+command="gunicorn --workers=5 --pid=${work_directory}/gunicorn.pid --log-level=INFO --log-file=${work_directory}/gunicorn.log --bind 0.0.0.0:${port} --daemon cloudify_hostpool.rest.service:app"
 ctx logger info "Starting cloudify-host-pool-service with command: ${command}"
 ${command}
 
@@ -80,12 +69,4 @@ wait_for_server ${port} 'Host-Pool-Service'
 host_ip=$(ctx instance host-ip)
 
 ctx instance runtime-properties pid_file ${work_directory}/gunicorn.pid
-export endPoint="${host_ip}:${port}"
-ctx instance runtime-properties endpoint "${endPoint}"
-ctx instance runtime-properties allocated_hosts "${endPoint}/hosts"
-ctx instance runtime-properties all_hosts "${endPoint}/hosts?all=true"
-ctx instance runtime-properties ui_log "${endPoint}/log"
-
-
-      
-      
+ctx instance runtime-properties endpoint "${host_ip}:${port}"

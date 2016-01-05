@@ -23,8 +23,8 @@ default:
 
   port: 22
   auth:
-    username: root
-    password: dummypassword
+    username: ubuntu
+    password: password
 
 hosts:
   
@@ -48,25 +48,10 @@ hosts:
   ###########################################################################
 
 
-  - host: 10.144.37.71
+  - host: 192.168.9.11
     auth: 
-      username: root
-      password: Fnng5gfj
-    public_address: 10.144.37.71
+      keyfile: keys/key.pem
+    public_address: 15.145.34.9
 
-  - host: 192.168.101.16/30
-    auth: 
-      username: root
-      password: FuVR5TpM
-
-  - host: 10.144.37.80
-    auth: 
-      username: root
-      password: A2qTxTf9
-    public_address: 10.144.37.80
-
-  - host: 10.144.37.83
-    auth: 
-      username: root
-      password: YGu27fAn
-    public_address: 10.144.37.83
+  - ip_range: 192.168.101.16/30
+    port: 80

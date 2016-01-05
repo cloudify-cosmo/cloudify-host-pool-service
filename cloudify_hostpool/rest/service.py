@@ -18,12 +18,10 @@ import httplib
 import yaml
 
 from flask import Flask
-from flask import request
 from flask import jsonify
 from flask_restful import Api
 
 from cloudify_hostpool import exceptions
-from cloudify_hostpool import utils
 from cloudify_hostpool.rest import backend as rest_backend
 from cloudify_hostpool.rest import config
 
@@ -42,15 +40,10 @@ def setup():
     # load application configuration file is exists
     config_file_path = os.environ.get('HOST_POOL_SERVICE_CONFIG_PATH')
     if config_file_path:
-        utils.write_to_log('service.setup', "config_file_path {0}".format(config_file_path))
         with open(config_file_path) as f:
             yaml_conf = yaml.load(f.read())
             config.configure(yaml_conf)
-        utils.write_to_log('service.setup', "config_file_path {0} after configure".format(config_file_path))
     else:
-        utils.write_to_log('service.setup', "Failed loading application: " \
-              "HOST_POOL_SERVICE_CONFIG_PATH environment variable is not defined. " \
-              "Use this variable to point to the application configuration file ")
         raise exceptions.ConfigurationError(
             'Failed loading application: '
             'HOST_POOL_SERVICE_CONFIG_PATH environment '
@@ -83,22 +76,9 @@ def list_hosts():
     List allocated hosts
     """
 
-    value_of_arg_all_key = utils.get_arg_value('all', arg_value='')
-    get_all_hosts = value_of_arg_all_key.lower() in ('yes', 'true')
-    hosts = backend.list_hosts(get_all_hosts)
-    utils.write_to_log('service.setup', "list_hosts is {0}".format(str(hosts)))
+    hosts = backend.list_hosts()
     return jsonify(hosts=hosts), httplib.OK
 
-
-@app.route('/log', methods=['GET'])
-def display_log_file():
-
-    """
-    Displays the log file of this service
-    """
-
-    file_content = utils.get_log_file_content()
-    return file_content, httplib.OK
 
 @app.route('/hosts', methods=['POST'])
 def acquire_host():

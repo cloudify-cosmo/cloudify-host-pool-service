@@ -13,8 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from cloudify_hostpool import utils
-
 
 class Config(object):
 
@@ -25,8 +23,8 @@ class Config(object):
     @staticmethod
     def _validate(config):
         if 'pool' not in config:
-            utils.write_to_log('config._validate', "'pool' property is missing from the configuration")
-            raise RuntimeError("'pool' property is missing from the configuration")
+            raise RuntimeError("'pool' property is missing from the "
+                               "configuration")
 
     @property
     def pool(self):

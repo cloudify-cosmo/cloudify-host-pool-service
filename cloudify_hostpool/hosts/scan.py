@@ -38,7 +38,7 @@ import os
 import resource
 import select
 import socket
-from cloudify_hostpool import utils
+
 
 _MAGIC_NUMBER_DEFAULT_PORT = 22
 _MAGIC_NUMBER_SPLIT_LOWER_THRESHOLD = .25
@@ -82,9 +82,7 @@ def _file_descriptor_resource_limit():
 
 def _init_connection_2(address_family, socket_type, protocol, address_tuple):
     try:
-        utils.write_to_log('_init_connection_2', "starting ...")
         sock = socket.socket(address_family, socket_type, protocol)
-        utils.write_to_log('_init_connection_2', "after socket.socket")
     except socket.error:
         return None, False
     sock_fd = sock.fileno()
@@ -92,22 +90,15 @@ def _init_connection_2(address_family, socket_type, protocol, address_tuple):
     fd_flags |= os.O_NONBLOCK
     fcntl.fcntl(sock_fd, fcntl.F_SETFL, fd_flags)
     try:
-        utils.write_to_log('_init_connection_2', "b4 connect")
         sock.connect(address_tuple)
-        utils.write_to_log('_init_connection_2', "after connect")
     except socket.error as e:
-        utils.write_to_log('_init_connection_2', "in socket error")
         if e.errno == errno.EINPROGRESS:
             return sock, False
         else:
-            utils.write_to_log('_init_connection_2', "b4 sock close in socket.error #1")
             sock.close()
-            utils.write_to_log('_init_connection_2', "after sock close in socket.error #1")
             return None, False
     else:
-        utils.write_to_log('_init_connection_2', "b4 sock close")
         sock.close()
-        utils.write_to_log('_init_connection_2', "after sock close")
         return None, True
 
 
@@ -132,11 +123,8 @@ def _wait_for_any_change(socket_fds):
 
 def _check_connection(sock):
     try:
-        utils.write_to_log('_check_connection', "Start")
         sock.getpeername()
-        utils.write_to_log('_check_connection', "After getpeername")
     except socket.error as e:
-        utils.write_to_log('_check_connection', "socket.error")
         if e.errno != errno.ENOTCONN:
             raise
         result = False
@@ -144,7 +132,6 @@ def _check_connection(sock):
         result = True
     finally:
         sock.close()
-    utils.write_to_log('_check_connection', "End")
     return result
 
 
@@ -155,9 +142,7 @@ def _scan(endpoints):
     # sockets = a dict indexed with a file descriptor and containing
     # *nested* tuples (socket object, (host, port)).
     sockets = {}
-    utils.write_to_log('scan._scan', "Starting... ")
     try:
-        utils.write_to_log('scan._scan', "Iterating endpoints")
         for host, port in endpoints:
             gai_args = [host,
                         port,
@@ -166,11 +151,8 @@ def _scan(endpoints):
                                             # IPv6 endpoints.
                         socket.SOCK_STREAM]
             try:
-                utils.write_to_log('scan._scan', "b4 getaddrinfo...")
                 gai_res = socket.getaddrinfo(*gai_args)
-                utils.write_to_log('scan._scan', "after getaddrinfo...")
             except socket.gaierror:
-                utils.write_to_log('scan._scan', "gaierror")
                 results[host, port] = False
                 break
             for r in gai_res:
@@ -186,9 +168,7 @@ def _scan(endpoints):
             else:
                 results[host, port] = False
         while sockets:
-            utils.write_to_log('scan._scan', "b4 _wait_for_any_change")
             fds = _wait_for_any_change(sockets.keys())
-            utils.write_to_log('scan._scan', "after _wait_for_any_change")
             for fd in fds:
                 sock, host_and_port = sockets[fd]
                 results[host_and_port] = _check_connection(sock)
@@ -196,7 +176,6 @@ def _scan(endpoints):
     finally:
         for s, _ in sockets.itervalues():
             s.close()
-    utils.write_to_log('scan._scan', "End b4 result")
     return results
 
 

@@ -23,7 +23,6 @@ import yaml
 
 from cloudify_hostpool.config.base import Loader
 from cloudify_hostpool import exceptions
-from cloudify_hostpool import utils
 
 CIDR_REGEX = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}'
 
@@ -31,42 +30,29 @@ CIDR_REGEX = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}'
 class YAMLPoolLoader(Loader):
 
     def __init__(self, pool):
-        utils.write_to_log('YAMLPoolLoader.init',"Starting...")
         config = self._load(pool)
-        utils.write_to_log('YAMLPoolLoader.init',"after load")
         self._validate(config)
-        utils.write_to_log('YAMLPoolLoader.init',"After validate")
         self.default = config.get('default', {})
-        utils.write_to_log('YAMLPoolLoader.init',"after config.get default")
         self.hosts = config['hosts']
-        utils.write_to_log('YAMLPoolLoader.init',"End")
 
     def load(self):
 
         def _create_host(_host):
 
             if not auth:
-                utils.write_to_log('_create_host', 'Authentication not provided for host: {0}'.format(_host))
                 raise exceptions.ConfigurationError(
                     'Authentication not provided '
                     'for host: {0}'.format(_host))
             if not port:
-                utils.write_to_log('_create_host', 'Port not provided for host: {0}'.format(_host))
                 raise exceptions.ConfigurationError(
                     'Port not provided for host: {0}'
                     .format(_host))
-
-            utils.write_to_log('_create_host', " auth {0}".format(str(auth)))
-            utils.write_to_log('_create_host', " port {0}".format(port))
-            utils.write_to_log('_create_host', " _host {0}".format(str(_host)))
-            utils.write_to_log('_create_host', " public address {0}".format(public_address))
             return {
                 'auth': auth,
                 'port': port,
                 'host': _host,
                 'public_address': public_address
             }
-
 
         for host in self.hosts:
 
@@ -75,7 +61,7 @@ class YAMLPoolLoader(Loader):
             public_address = host.get('public_address')
 
             if 'host' in host:
-                utils.write_to_log('_create_host', "'host' is in host")
+
                 # an explicit address is configured for this host
                 yield _create_host(host['host'])
 
@@ -87,20 +73,17 @@ class YAMLPoolLoader(Loader):
                 for host_ip in _get_subnet_hosts(subnet, mask):
                     yield _create_host(host_ip)
             else:
-                utils.write_to_log('_create_host', "A host must define either the 'host' or the 'ip_range' key")
                 raise exceptions.ConfigurationError(
                     "A host must define either the "
                     "'host' or the 'ip_range' key")
 
     def _get_auth(self, host):
-        utils.write_to_log('get_auth', "Starting...")
+
         default_auth = self.default.get('auth', {})
         auth = copy.deepcopy(default_auth)
         auth.update(host.get('auth', {}))
         keyfile = auth.get('keyfile')
-        utils.write_to_log('get_auth', "keyfile is {0}".format(keyfile))
         if keyfile and not os.access(keyfile, os.R_OK):
-            utils.write_to_log('get_auth', "keyfile {0} no access".format(keyfile))
             raise exceptions.ConfigurationError(
                 'Key file {0} does not exist or does not have '
                 'the proper permissions'.format(keyfile))
@@ -112,23 +95,18 @@ class YAMLPoolLoader(Loader):
     @staticmethod
     def _load(pool):
         if isinstance(pool, str):
-            utils.write_to_log('_load', "isinstance")
             with open(pool, 'r') as config_file:
-                utils.write_to_log('_load', "open pool {0} config_file".format(pool))
                 return yaml.load(config_file)
         elif isinstance(pool, dict):
-            utils.write_to_log('_load', "isinstance pool dict")
             return pool
         else:
-            utils.write_to_log('_load', "Unexpected pool configuration type: '{0}'".format(type(pool)))
             raise exceptions.ConfigurationError(
-                'Unexpected pool configuration '
+                'Unexpected configuration '
                 'type: {0}'.format(type(pool)))
 
     @staticmethod
     def _validate(config):
         if 'hosts' not in config:
-            utils.write_to_log('_validate', "Pool configuration is missing a hosts section")
             raise exceptions.ConfigurationError(
                 'Pool configuration '
                 'is missing a hosts section')
@@ -157,7 +135,6 @@ def _get_subnet_and_mask(ip_range):
     regex = re.compile(CIDR_REGEX)
     result = regex.findall(ip_range)
     if len(result) != 1:
-        utils.write_to_log('_get_subnet_and_mask', '{0} is not a legal CIDR notation'.format(ip_range))
         raise exceptions.ConfigurationError(
             '{0} is not a legal CIDR notation'.format(ip_range))
     subnet, mask = ip_range.split('/')
