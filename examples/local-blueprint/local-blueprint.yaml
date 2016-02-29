@@ -11,12 +11,11 @@ inputs:
     type: string
     description: relative path to a pool configuration file
     default: pool.yaml
-  working_directory:
-    type: string
+  debug:
+    type: boolean
     description: |
-      absolute path to a directory where the service will be
-      running from
-    default: /tmp
+      nable debug logging of the deployment
+    default: true
 
 node_templates:
 
@@ -29,7 +28,8 @@ node_templates:
   host_pool_service:
     type: cloudify.nodes.HostPoolService
     properties:
-      working_directory: { get_input: working_directory }
+      debug: { get_input: debug }
+      gunicorn_debug: { get_input: debug }
       pool: { get_input: pool }
     relationships:
       - type: cloudify.relationships.contained_in

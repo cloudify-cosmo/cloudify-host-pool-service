@@ -49,8 +49,6 @@ class ExamplesTest(testtools.TestCase):
 
     def test_local_blueprint(self):
 
-        tempdir = tempfile.mkdtemp(prefix='cloudify-host-pool-service')
-
         blueprint_path = os.path.join(
             os.path.dirname(os.path.dirname(cloudify_hostpool.__file__)),
             'examples',
@@ -60,7 +58,6 @@ class ExamplesTest(testtools.TestCase):
 
         env = local.init_env(
             blueprint_path=blueprint_path,
-            inputs={'working_directory': tempdir},
             ignored_modules=IGNORED_LOCAL_WORKFLOW_MODULES)
 
         env.execute('install', task_retries=0)
