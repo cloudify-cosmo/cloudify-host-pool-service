@@ -15,7 +15,7 @@
 '''
     lifecycle.Start
     ~~~~~~~~~~~~~~~
-    Starts the Cloudify Host-Pool Service
+    Downloads and starts the Cloudify Host-Pool Service
 '''
 
 import pkgutil
@@ -25,7 +25,6 @@ from string import Template
 import tempfile
 from subprocess import Popen, PIPE, call
 import requests
-
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError, RecoverableError
 from cloudify_hostpool.logger import get_hostpool_logger
@@ -123,7 +122,7 @@ def start_service(logger):
 
 def set_service_on_boot(logger):
     '''Sets up the service to start on system boot'''
-    # Enable service on boot for Red Hat
+    # Enable service on boot
     logger.info('(sudo) Enabling the Host-Pool service on boot')
 
     # Red Hat
@@ -154,6 +153,7 @@ def test_service_liveness(logger):
         logger.info('[Attempt {0}/{1}] Liveness detection check'
                     .format(i, max_attempts))
         logger.debug('GET {0}/hosts'.format(ENDPOINT))
+        req = None
         try:
             req = requests.get('{0}/hosts'.format(ENDPOINT))
             logger.debug('HTTP status: {0}'.format(req.status_code))
@@ -162,14 +162,51 @@ def test_service_liveness(logger):
                         .format(ex))
 
         # Check the HTTP status code
-        if req.status_code == 200:
-            logger.info('Host-Pool service is alive')
-            break
+        if req:
+            if req.status_code == 200:
+                logger.info('Host-Pool service is alive')
+                break
+            else:
+                logger.error('Bad HTTP status returned: {0}'
+                             .format(req.status_code))
         else:
-            logger.error('Bad HTTP status returned: {0}'
-                         .format(req.status_code))
+            logger.info('Host-Pool service is not ready yet')
+
         logger.warn('Waiting 2 seconds before retrying')
         sleep(2)
+
+
+def install_seed_hosts(logger):
+    '''Uses the REST service to install hosts set during deployment'''
+    seed_config = ctx.instance.runtime_properties.get('seed_config')
+    if seed_config:
+        logger.info('Installing seed hosts data')
+        try:
+            logger.debug('POST /hosts: {0}'.format(seed_config))
+            req = requests.post('{0}/hosts'.format(ENDPOINT),
+                                json=seed_config)
+            logger.debug('HTTP status: {0}'.format(req.status_code))
+        except requests.exceptions.RequestException as ex:
+            raise RecoverableError(ex)
+
+
+def start_standalone_service(logger):
+    '''Starts a standalone service process'''
+    logger.info('Starting the Host-Pool service (standalone)')
+    svc_cmd = \
+        '{0} --workers={1} --pid="{2}" --log-level="{3}" \
+        --log-file="{4}" --bind "0.0.0.0:{5}" --daemon "{6}"'.format(
+            os.path.join(VIRT_DIR, 'bin/gunicorn'),
+            5,
+            os.path.join(BASE_DIR, 'cloudify-hostpool.pid'),
+            'DEBUG' if SVC_DEBUG else 'INFO',
+            os.path.join(BASE_DIR, 'gunicorn.log'),
+            PORT,
+            'cloudify_hostpool.rest.service:app'
+        )
+    logger.debug('Executing: {0}'.format(svc_cmd))
+    svc_pid = Popen(svc_cmd, shell=True).pid
+    logger.debug('Service task spawned with PID "{0}'.format(svc_pid))
 
 
 def main():
@@ -180,20 +217,26 @@ def main():
     # Make sure VIRTUALENV is set
     if not VIRT_DIR:
         raise NonRecoverableError(
-            'VIRTUALENV environment variable must be set!')
+            'VIRTUALENV or VIRTUAL_ENV environment variable must be set!')
 
-    # Grab the init script from the package
-    svc_tmp = download_service(logger)
-    # Set the correct service permissions
-    set_service_permissions(svc_tmp, logger)
-    # Move the init script to /etc/init.d/
-    install_service(svc_tmp, logger)
-    # Start the service
-    start_service(logger)
+    if ctx.node.properties.get('run_as_daemon'):
+        # Grab the init script from the package
+        svc_tmp = download_service(logger)
+        # Set the correct service permissions
+        set_service_permissions(svc_tmp, logger)
+        # Move the init script to /etc/init.d/
+        install_service(svc_tmp, logger)
+        # Start the service
+        start_service(logger)
+        # Enable the service to start on boot
+        set_service_on_boot(logger)
+    else:
+        # Start the stand-alone process
+        start_standalone_service(logger)
     # Test if the service is alive
     test_service_liveness(logger)
-    # Enable the service to start on boot
-    set_service_on_boot(logger)
+    # Install any seed hosts data into the service
+    install_seed_hosts(logger)
     # Set runtime properties
     ctx.instance.runtime_properties['service_name'] = SVC_NAME
     ctx.instance.runtime_properties['endpoint'] = ENDPOINT

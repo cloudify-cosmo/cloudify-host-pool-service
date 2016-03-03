@@ -6,6 +6,7 @@ node_types:
       pool:
         type: string
         description: Path to the service configuration file (YAML)
+        default: ~
       port:
         type: integer
         description: Port to run the service on
@@ -22,6 +23,14 @@ node_types:
         type: string
         description: URL to the source code of the service
         default: https://github.com/cloudify-cosmo/cloudify-host-pool-service/archive/master.zip
+      working_directory:
+        type: string
+        description: Working directory for the service workflows
+        default: ~
+      run_as_daemon:
+        type: boolean
+        description: Set to true to enable the service to run as a SysV daemon
+        default: true
     interfaces:
       cloudify.interfaces.lifecycle:
         create:

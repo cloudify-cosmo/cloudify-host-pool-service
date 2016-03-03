@@ -1,20 +1,30 @@
-tosca_definitions_version: cloudify_dsl_1_0
+tosca_definitions_version: cloudify_dsl_1_2
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/3.2rc1/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/3.3.1/types.yaml
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/master/host-pool-service.yaml
 
-
 inputs:
-
   pool:
     type: string
-    description: relative path to a pool configuration file
+    description: |
+      Relative path to the host-pool configuration file
     default: pool.yaml
   debug:
     type: boolean
     description: |
-      nable debug logging of the deployment
+      Sets debug logging for the deployment
+    default: true
+  working_directory:
+    type: string
+    description: |
+      absolute path to a directory where the service will be
+      running from
+    default: /tmp
+  run_as_daemon:
+    type: boolean
+    description: |
+      Set to true to enable the service to run as a SysV daemon
     default: true
 
 node_templates:
@@ -28,9 +38,11 @@ node_templates:
   host_pool_service:
     type: cloudify.nodes.HostPoolService
     properties:
+      pool: { get_input: pool }
       debug: { get_input: debug }
       gunicorn_debug: { get_input: debug }
-      pool: { get_input: pool }
+      working_directory: { get_input: working_directory }
+      run_as_daemon: { get_input: run_as_daemon }
     relationships:
-      - type: cloudify.relationships.contained_in
-        target: host
+    - type: cloudify.relationships.contained_in
+      target: host

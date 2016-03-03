@@ -12,7 +12,6 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-
 '''
     hostpool.logger
     ~~~~~~~~~~~~~~~
@@ -44,6 +43,7 @@ def get_hostpool_logger(mod, debug=False,
 
     if debug:
         logger.setLevel(logging.DEBUG)
+
         # Preference log_path, fallback working_directory/debug.log
         if not log_file and ctx:
             log_file = os.path.join(
