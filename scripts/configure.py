@@ -20,66 +20,65 @@
 '''
 
 import os
-import json
 import yaml
+from tempfile import mkstemp
 from cloudify import ctx
 from cloudify.exceptions import NonRecoverableError
 from cloudify_hostpool.logger import get_hostpool_logger
 
 BASE_DIR = ctx.instance.runtime_properties.get('working_directory')
 POOL_CFG_PATH = os.path.join(BASE_DIR, 'pool.yaml')
-CONFIG_PATH = os.path.join(BASE_DIR, 'config.json')
 
 
-def download_key_files(cfg, logger):
-    '''Downloads all key files to the service directory
+def get_key_content(key_file, logger):
+    '''Downloads a key and returns the key contents'''
+    tfd, target_path = mkstemp()
+    os.close(tfd)
+    logger.debug('Downloading key file "{0}" to path "{1}"'
+                 .format(key_file, target_path))
+    ctx.download_resource(key_file, target_path)
+    keycontent = None
+    with open(target_path, 'r') as f_key:
+        keycontent = f_key.read()
+        logger.debug('Key file "{0}" contains: {1}'
+                     .format(key_file, keycontent))
+    os.remove(target_path)
+    return keycontent
 
-    :param dict cfg: Host-Pool configuration file data
-    :returns: List of blueprint-relative paths to the key files
+
+def set_host_key_content(cfg, logger):
+    '''Replaces host key file string with key content
+
+    :param dict cfg: Host-Pool configuration data
+    :returns: Updated configuration data
     '''
-    keys = set()
-
     # Get the default key (if specified)
     logger.debug('Checking for a default key file')
-    default_key = cfg.get('default', {}).get('auth', {}).get('keyfile')
-    logger.debug('Default key file: "{0}"'.format(default_key))
-    if default_key:
-        keys.add(default_key)
+    defaults = cfg.get('default', {})
+    default_key = defaults.get('credentials', {}).get('key')
+    default_key_file = defaults.get('credentials', {}).get('key_file')
+    # "key" has priority over "key_file"
+    if not default_key and default_key_file:
+        # Default key file was specified, let's convert and use
+        logger.debug('Default key file: "{0}"'.format(default_key_file))
+        cfg['default']['credentials']['key'] = \
+            get_key_content(default_key_file, logger)
+        del cfg['default']['credentials']['key_file']
 
-    # Create a unique list of keys to download
+    # Get the host keys
     for host in cfg.get('hosts'):
         logger.debug('Checking key file for host "{0}"'
-                     .format(host.get('host')))
-        key = host.get('auth', {}).get('keyfile')
-        if not key:
-            logger.debug('Host "{0}" does not specify a key file'
-                         .format(host.get('host')))
-        else:
-            logger.debug('Host "{0}" specified key file "{1}"'
-                         .format(host.get('host'), key))
-            keys.add(key)
-
-    # Download the key files to the service directory
-    for key_file in keys:
-        target_path = os.path.join(BASE_DIR, key_file)
-        directory = os.path.dirname(target_path)
-        os.makedirs(directory)
-        logger.debug('Downloading key file "{0}" to path "{1}"'
-                     .format(key_file, target_path))
-        ctx.download_resource(key_file, target_path)
-
-    return keys
-
-
-def create_config_file(logger):
-    '''Creates a JSON config file for the service to use'''
-    config_json = {
-        'pool': POOL_CFG_PATH
-    }
-    logger.debug('Creating service configuration file: "{0}"'
-                 .format(json.dumps(config_json, indent=2)))
-    with open(CONFIG_PATH, 'w') as f_cfg:
-        json.dump(config_json, f_cfg, indent=2)
+                     .format(host.get('name')))
+        host_key = host.get('credentials', {}).get('key')
+        host_key_file = host.get('credentials', {}).get('key_file')
+        # "key" has priority over "key_file"
+        if not host_key and host_key_file:
+            # Default key file was specified, let's convert and use
+            logger.debug('Host key file: "{0}"'.format(host_key_file))
+            host['credentials']['key'] = \
+                get_key_content(host_key_file, logger)
+            del host['credentials']['key_file']
+    return cfg
 
 
 def main():
@@ -88,12 +87,14 @@ def main():
                                  debug=ctx.node.properties.get('debug'))
 
     if not ctx.node.properties.get('pool'):
-        raise NonRecoverableError('Configuration file for the Host-Pool '
-                                  'service was not specified')
+        logger.info('Configuration file for the Host-Pool service '
+                    'was not specified. Continuing without seed hosts')
+        ctx.instance.runtime_properties['seed_hosts'] = None
+        return
 
     logger.debug('Downloading host-pool configuration file "{0}" to "{1}"'
-                 .format(ctx.node.properties.get('pool'), POOL_CFG_PATH))
-    ctx.download_resource(ctx.node.properties.get('pool'),
+                 .format(ctx.node.properties['pool'], POOL_CFG_PATH))
+    ctx.download_resource(ctx.node.properties['pool'],
                           target_path=POOL_CFG_PATH)
 
     if not os.path.exists(POOL_CFG_PATH):
@@ -102,20 +103,15 @@ def main():
 
     # Load our configuration data
     with open(POOL_CFG_PATH) as f_cfg:
+        cfg = None
+        logger.info('Loading Host-Pool seed hosts')
         try:
-            logger.info('Loading Host-Pool configuration data')
             cfg = yaml.load(f_cfg)
-            logger.info('Importing host key files from blueprint')
-            download_key_files(cfg, logger)
-            logger.info('Creating service configuration file')
-            create_config_file(logger)
         except yaml.YAMLError:
             raise NonRecoverableError('Configuration file for the Host-Pool '
                                       'service is not valid YAML')
-
-    logger.info('Setting runtime_property "config_path" to "{0}"'
-                .format(CONFIG_PATH))
-    ctx.instance.runtime_properties['config_path'] = CONFIG_PATH
-
+        logger.info('Converting host key files from blueprint')
+        seed_config = set_host_key_content(cfg, logger)
+        ctx.instance.runtime_properties['seed_config'] = seed_config
 
 main()

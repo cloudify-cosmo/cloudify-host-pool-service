@@ -1,9 +1,33 @@
-pool:
-  default:
-    auth:
-      username: x
-    port: 123
+default:
+  os: linux
+  credentials:
+    username: centos
+  endpoint:
+    port: 22
+    protocol: ssh
 
-  hosts:
-    - host: google.com
-      port: 80
+hosts:
+  - name: ubuntu_server
+    credentials:
+      username: ubuntu
+      password: mypassw0rd1234
+    endpoint:
+      ip: 192.168.100.7
+      
+  - name: win2008_server
+    os: windows
+    credentials:
+      username: Administrator
+      password: mypassw0rd4321
+    endpoint:
+      # 192.168.100.8 - 192.168.100.11
+      ip: 192.168.100.8/30
+      port: 5985
+      protocol: winrm-http
+    
+  - name: centos_cluster
+    credentials:
+      password: clusterP@ssw0rd
+    endpoint:
+      # 192.168.100.12 - 192.168.100.15
+      ip: 192.168.100.12/30

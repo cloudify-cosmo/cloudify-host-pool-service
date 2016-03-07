@@ -5,53 +5,59 @@
 #####################################################
 
 
-default:
-  
-  ###########################################################################
-  # These properties will be applied to any host that does not define a
-  # property explicitly. This section is optional
-  # Available keys:
-  #   - port: Authentication port. This port will be used when the cloudify
-  #           manager will attempt to log in to the host.
-  #   - auth: An authentication dictionary.
-  #      - username: username for authentication.
-  #      - password: password for authentication
-  #                 (Optional if keyfile is specified).
-  #      - keyfile: key file for authentication
-  #                 (Optional if password is specified).
-  ###########################################################################
+###########################################################################
+# These properties will be applied to any host that does not define a
+# property explicitly. This section is optional
+# Available keys:
+#   - port: Authentication port. This port will be used when the cloudify
+#           manager will attempt to log in to the host.
+#   - auth: An authentication dictionary.
+#      - username: username for authentication.
+#      - password: password for authentication
+#                 (Optional if keyfile is specified).
+#      - keyfile: key file for authentication
+#                 (Optional if password is specified).
+###########################################################################
 
-  port: 22
-  auth:
+
+
+###########################################################################
+# This section is where you define the host addresses and other host
+# properties. It is a YAML list, where each list item can contain the
+# following keys:
+#   - host: The address of the host, this can be either an IP or a DNS
+#           name. This address will be used by cloudify in order to connect
+#           to the host
+#   - ip_range: CIDR notation subnet definition. Addresses from this range
+#               will be used by cloudify to connect to hosts.
+#   - auth: See 'defaults' section above.
+#   - port: See 'defaults' section above.
+#   - public_address: An externally available address to reach this
+#                     host with. This address serves of no pratical use
+#                     for cloudify (as opposed to the 'host' or 'ip_range'
+#                     parameters). It is here only so that it may be
+#                     consumed by clients of the service
+#                     (The host-pool-plugin for example)
+###########################################################################
+
+default:
+  os: linux
+  credentials:
     username: ubuntu
-    password: password
+  endpoint:
+    port: 22
+    protocol: ssh
 
 hosts:
-  
-  ###########################################################################
-  # This section is where you define the host addresses and other host
-  # properties. It is a YAML list, where each list item can contain the
-  # following keys:
-  #   - host: The address of the host, this can be either an IP or a DNS
-  #           name. This address will be used by cloudify in order to connect
-  #           to the host
-  #   - ip_range: CIDR notation subnet definition. Addresses from this range
-  #               will be used by cloudify to connect to hosts.
-  #   - auth: See 'defaults' section above.
-  #   - port: See 'defaults' section above.
-  #   - public_address: An externally available address to reach this
-  #                     host with. This address serves of no pratical use
-  #                     for cloudify (as opposed to the 'host' or 'ip_range'
-  #                     parameters). It is here only so that it may be
-  #                     consumed by clients of the service
-  #                     (The host-pool-plugin for example)
-  ###########################################################################
+  - name: server1
+    credentials:
+      key_file: keys/key.pem
+    endpoint:
+      ip: 192.168.100.09
+    
+  - name: server2
+    credentials:
+      password: clusterP@ssw0rd
+    endpoint:
+      ip: 192.168.100.10
 
-
-  - host: 192.168.9.11
-    auth: 
-      keyfile: keys/key.pem
-    public_address: 15.145.34.9
-
-  - ip_range: 192.168.101.16/30
-    port: 80

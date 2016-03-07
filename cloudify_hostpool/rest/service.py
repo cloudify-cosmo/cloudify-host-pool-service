@@ -1,117 +1,152 @@
-########
-# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
+# #######
+# Copyright (c) 2016 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# * See the License for the specific language governing permissions and
-# * limitations under the License.
+#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    * See the License for the specific language governing permissions and
+#    * limitations under the License.
+'''
+    cloudify_hostpool.rest.service
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    RESTful service endpoints and initialization
+'''
 
-import os
+# pylint: disable=C0103
+# pylint: disable=W0603
+
 import httplib
-import yaml
+import logging
 
-from flask import Flask
-from flask import jsonify
-from flask_restful import Api
+from flask import Flask, request
+from flask_restful import Api, Resource
 
-from cloudify_hostpool import exceptions
 from cloudify_hostpool.rest import backend as rest_backend
-from cloudify_hostpool.rest import config
 
-
-app, backend = None, None
+# Globals
+app, api, backend = None, None, None
 
 
 def setup():
-
+    '''Service entry point'''
     global app, backend
-
     # initialize flask application
     app = Flask(__name__)
-    Api(app)
-
-    # load application configuration file is exists
-    config_file_path = os.environ.get('HOST_POOL_SERVICE_CONFIG_PATH')
-    if config_file_path:
-        with open(config_file_path) as f:
-            yaml_conf = yaml.load(f.read())
-            config.configure(yaml_conf)
-    else:
-        raise exceptions.ConfigurationError(
-            'Failed loading application: '
-            'HOST_POOL_SERVICE_CONFIG_PATH environment '
-            'variable is not defined. Use this variable to '
-            'point to the application configuration file ')
-
+    # configure Flask to Gunicorn logging
+    gunicorn_handlers = logging.getLogger('gunicorn.error').handlers
+    app.logger.handlers.extend(gunicorn_handlers)
+    app.logger.info('Flask, Gunicorn logging enabled')
     # initialize application backend
-    backend = rest_backend.RestBackend(pool=config.get().pool)
+    backend = rest_backend.RestBackend(logger=app.logger)
 
 
 def reset_backend():
-    global app, backend
-    # initialize application backend
-    backend = rest_backend.RestBackend(pool=config.get().pool)
+    '''Initialize application backend'''
+    global backend
+    app.logger.info('Resetting API service database data')
+    backend = rest_backend.RestBackend(logger=app.logger,
+                                       reset_storage=True)
+
 
 setup()
 
 
-@app.errorhandler(exceptions.HostPoolHTTPException)
-def handle_errors(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.get_code()
-    return response
+class Service(Api):
+    '''Central API service handler'''
+    def handle_error(self, e):
+        '''Handle service-wide exceptions'''
+        app.logger.error('API exception caught: {0}::{1}'.format(
+            type(e), e))
+        if hasattr(e, 'status_code'):
+            app.logger.error('Exception.status_code: {0}'.format(
+                e.status_code))
+            return self.make_response({
+                'message': str(e)
+            }, e.status_code)
+        return super(Service, self).handle_error(e)
 
 
-@app.route('/hosts', methods=['GET'])
-def list_hosts():
-
-    """
-    List allocated hosts
-    """
-
-    hosts = backend.list_hosts()
-    return jsonify(hosts=hosts), httplib.OK
+api = Service(app)
 
 
-@app.route('/hosts', methods=['POST'])
-def acquire_host():
+class Host(Resource):
+    '''Host object handling'''
+    @staticmethod
+    def get(host_id):
+        '''Get the details of the host with the given host_id'''
+        app.logger.debug('GET /host/{0}'.format(host_id))
+        host = backend.get_host(host_id)
+        return host, httplib.OK
 
-    """
-    Acquire(allocate) the host
-    """
+    @staticmethod
+    def delete(host_id):
+        '''Removes a host from the host pool'''
+        app.logger.debug('DELETE /host/{0}'.format(host_id))
+        backend.remove_host(host_id)
+        return {}, httplib.NO_CONTENT
 
-    host = backend.acquire_host()
-    return jsonify(host), httplib.CREATED
-
-
-@app.route('/hosts/<host_id>', methods=['DELETE'])
-def release_host(host_id):
-
-    """
-    Release the host with the given host_id
-    """
-
-    host = backend.release_host(host_id)
-    return jsonify(host), httplib.OK
+    @staticmethod
+    def patch(host_id):
+        '''Updates a host in the host pool'''
+        data = request.get_json() or dict()
+        app.logger.debug('PATCH /host/{0}, data="{1}"'.format(
+            host_id, data))
+        host = backend.update_host(host_id, data)
+        return host, httplib.OK
 
 
-@app.route('/hosts/<host_id>', methods=['GET'])
-def get_host(host_id):
+class HostList(Resource):
+    '''Endpoint for host lists'''
+    @staticmethod
+    def get():
+        '''Get the details of the host with the given host_id'''
+        app.logger.debug('GET /hosts')
+        hosts = backend.list_hosts()
+        return hosts, httplib.OK
 
-    """
-    Get the details of the host with the given host_id
-    """
+    @staticmethod
+    def post():
+        '''Adds host(s) to the host pool'''
+        hosts = request.get_json()
+        app.logger.debug('POST /hosts, data="{0}"'.format(hosts))
+        if not hosts:
+            return 'Data must be a valid JSON array', httplib.BAD_REQUEST
+        ret = backend.add_hosts(hosts)
+        return ret, httplib.CREATED
 
-    host = backend.get_host(host_id)
-    return jsonify(host), httplib.OK
 
+class HostAllocate(Resource):
+    '''Endpoint to acquire a host from the pool'''
+    @staticmethod
+    def post():
+        '''Allocates a host from the pool'''
+        data = request.get_json() or dict()
+        app.logger.debug('POST /host/allocate, data="{0}"'.format(data))
+        host = backend.acquire_host(requested_os=data.get('os'))
+        return host, httplib.OK
+
+
+class HostDeallocate(Resource):
+    '''Endpoing to release a host to the pool'''
+    @staticmethod
+    def delete(host_id):
+        '''Deallocates a host from the pool'''
+        app.logger.debug('DELETE /host/{0}/deallocate'.format(host_id))
+        host = backend.release_host(host_id)
+        return host, httplib.NO_CONTENT
+
+
+# Map the endpoints to classes
+api.add_resource(Host, '/host/<int:host_id>')
+api.add_resource(HostList, '/hosts')
+api.add_resource(HostAllocate, '/host/allocate')
+api.add_resource(HostDeallocate, '/host/<int:host_id>/deallocate')
 
 if __name__ == '__main__':
     app.run()

@@ -17,7 +17,6 @@ SVC_LOG_LEVEL=${TMPL_SVC_LOG_LEVEL}
 SVC_PID_FILE=$BASE_DIR/cloudify-hostpool.pid
 SVC_LOG_FILE=$BASE_DIR/gunicorn.log
 SVC_PORT=8080
-SVC_CONFIG_FILE=$BASE_DIR/config.json
 SVC_NAME="Cloudify Host-Pool service"
 
 pid_file_exists() {
@@ -45,9 +44,10 @@ remove_pid_file() {
 }
 
 start_svc() {
+    # Rebase ourselves
+    cd $BASE_DIR
     # Access the task's virtualenv
     . $VIRT_DIR/bin/activate
-    export HOST_POOL_SERVICE_CONFIG_PATH=$SVC_CONFIG_FILE
     # Start the REST service
     echo "Starting $SVC_NAME..."
     $VIRT_DIR/bin/gunicorn \

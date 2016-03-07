@@ -1,34 +1,36 @@
-########
-# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
+# #######
+# Copyright (c) 2016 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# * See the License for the specific language governing permissions and
-# * limitations under the License.
+#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    * See the License for the specific language governing permissions and
+#    * limitations under the License.
+'''
+    cloudify_hostpool.exceptions
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    RESTful service exception handling
+'''
 
 
 class HostPoolHTTPException(Exception):
-
-    """
-    An error raised by service modules to handle errors in REST API
-
-    """
-
+    '''An error raised by service modules to handle errors in REST API'''
     def __init__(self, status_code):
         self.status_code = status_code
         super(HostPoolHTTPException, self).__init__(self.__str__())
 
     def get_code(self):
+        '''Get the HTTP response code'''
         return self.status_code
 
     def to_dict(self):
+        '''Get the HTTP response object'''
         return {'error': self.__str__()}
 
 
@@ -43,7 +45,7 @@ class NoHostAvailableException(HostPoolHTTPException):
         super(NoHostAvailableException, self).__init__(515)
 
     def __str__(self):
-        return 'Cannot acquire host. All hosts are either is use or not ' \
+        return 'Cannot acquire host. All hosts are either in use or not ' \
                'responding.'
 
 
