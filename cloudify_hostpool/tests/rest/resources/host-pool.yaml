@@ -13,6 +13,9 @@ hosts:
       password: mypassw0rd1234
     endpoint:
       ip: 192.168.100.7
+    tags:
+    - ubuntu
+    - test
       
   - name: win2008_server
     os: windows
@@ -24,6 +27,9 @@ hosts:
       ip: 192.168.100.8/30
       port: 5985
       protocol: winrm-http
+    tags:
+    - win_2008
+    - test
     
   - name: centos_cluster
     credentials:
@@ -31,3 +37,6 @@ hosts:
     endpoint:
       # 192.168.100.12 - 192.168.100.15
       ip: 192.168.100.12/30
+    tags:
+    - redhat
+    - test
