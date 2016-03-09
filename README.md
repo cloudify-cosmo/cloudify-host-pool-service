@@ -28,11 +28,26 @@ service deployment.
 
   **/host/{id}/deallocate** [[DELETE](#delete-hostiddeallocate)]
 
+## Filters
+
+Filters can be used for both listing hosts ([/hosts GET](#get-hosts)) and allocating hosts
+([/host/allocate POST](#post-hostallocate)) and they share the same set of filters.  For instance,
+if you want to list all hosts that are Windows hosts, pass the query string ```?os=windows```.
+If you've specified tags for your hosts, you may also query them by using ```?tags=tag1,tag2```
+but know that searching by tags is an AND operation (all tags must match) and not an OR
+operation (any one tag must match). Multiple / array filters are comma separated when passed as
+GET query parameters.  When allocating hosts, pass your filters as JSON in the POST data.
+
+Currently, the following filters are accepted:
+
+* __os__ => Filters by OS type (windows or linux)
+* __tags__ => Filters by an array of tags assigned to the hosts
+
 ## API endpoint details
 
 ### [GET] /hosts
 
-Queries the service for all hosts, regardless of allocation, in the host pool.
+Queries the service for all hosts.  Uses [filters](#filters) if provided in the query string.
 
 #### Response
 This endpoint returns a list of host details
@@ -201,14 +216,15 @@ HTTP/1.1 204 NO CONTENT
 
 Allocates a host from the pool for use by the user. This endpoint will check if the hosts'
 endpoint is "alive" (able to be connected to) or not and will mark the host as "allocated" before
-returning the host details to the user.
+returning the host details to the user.  Uses [filters](#filters) if provided as JSON data.
 
 An "os" can be specified but is not required.
 
 #### Request
 ```json
 {
-    "os": "linux"
+    "os": "linux",
+    "tags": ["large"]
 }
 ```
 
@@ -230,6 +246,7 @@ HTTP/1.1 200 OK
         "username": "centos",
         "password": "Sup3rS3cur3"
     },
+    "tags": ["large", "ubuntu"],
     "allocated": true,
     "alive": true
 }

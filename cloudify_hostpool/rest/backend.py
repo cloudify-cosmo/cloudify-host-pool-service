@@ -18,6 +18,8 @@
     RESTful service backend methods
 '''
 
+# pylint: disable=R0911
+
 from copy import deepcopy
 from collections import Mapping
 import filelock
@@ -121,6 +123,10 @@ class HostAlchemist(object):
            defaults['endpoint'].get('ip'):
             raise exceptions.ConfigurationError(
                 'Default "endpoint.ip" is not allowed')
+        # Validate tags
+        if not isinstance(defaults.get('tags', list()), list):
+            raise exceptions.ConfigurationError(
+                'Default "tags" must be a valid JSON Array')
 
     @staticmethod
     def validate_host_endpoint(endpoint, check_ip_range=True):
@@ -188,6 +194,10 @@ class HostAlchemist(object):
                                     check_ip_range=check_ip_range)
         # Validate credentials
         self.validate_host_credentials(host.get('credentials'))
+        # Validate tags
+        if not isinstance(host.get('tags', list()), list):
+            raise exceptions.ConfigurationError(
+                'Invalid, non-list tags set for host')
 
     def impose_defaults(self, host, defaults):
         '''Adds default configuration to hosts'''
@@ -203,6 +213,10 @@ class HostAlchemist(object):
         '''Adds default base information to a host'''
         host['name'] = host.get('name') or defaults.get('name')
         host['os'] = host.get('os') or defaults.get('os')
+        # Set tags. If tags are malformed, ConfigurationError is raised later
+        if not host.get('tags') or isinstance(host.get('tags'), list):
+            host['tags'] = list(set(
+                host.get('tags', list()) + defaults.get('tags', list())))
 
     @staticmethod
     def impose_default_credentials(host, defaults):
@@ -251,11 +265,11 @@ class RestBackend(object):
             with FLOCK.acquire(timeout=10):
                 self.storage.init_data()
 
-    def list_hosts(self):
+    def list_hosts(self, filters=None):
         '''Get an iterable of all hosts'''
         self.logger.debug('backend.list_hosts()')
-        hosts = self.storage.get_hosts()
-        return hosts
+        return [x for x in self.storage.get_hosts()
+                if self.check_host_by_filters(x, filters)]
 
     def add_hosts(self, config):
         '''Adds hosts to the host pool'''
@@ -292,33 +306,41 @@ class RestBackend(object):
             raise exceptions.HostNotFoundException(host_id)
         return h_id
 
-    def host_is_os(self, host, requested_os=None):
-        '''Validates & compares a requested OS to a host OS'''
-        self.logger.debug('backend.host_is_os({0})'.format(requested_os))
+    def check_host_by_filters(self, host, filters):
+        '''Check if a host matches a set of filters'''
+        # Basic validation
+        if not filters or not isinstance(filters, dict):
+            self.logger.warn('No filters specified')
+            return True
         if not host:
             self.logger.warn('No host specified')
             return False
-        if not isinstance(host, dict):
-            self.logger.warn('Host must be a valid JSON object')
-            return False
-        # If no OS was specified, no need to try and match
-        if not requested_os:
-            return True
-        if not isinstance(requested_os, basestring):
-            self.logger.warn('Invalid, non-string requested OS provided')
-            return False
-        # If an OS was specified, see if it matches the hosts' OS
-        if requested_os.lower() == host.get('os', '').lower():
-            return True
-        return False
+        # Check filters using a True fall-through
+        # Check OS
+        if filters.get('os'):
+            if not isinstance(filters.get('os'), basestring):
+                self.logger.warn('Invalid, non-string requested OS provided')
+                return False
+            if filters.get('os').lower() != host.get('os', '').lower():
+                self.logger.warn('Host does not match all filters '
+                                 '(os={0})'.format(filters.get('os').lower()))
+                return False
+        # Check tags (AND method)
+        if filters.get('tags'):
+            if not isinstance(filters.get('tags'), list):
+                self.logger.warn('Invalid, non-list requested tags provided')
+                return False
+            for tag in filters.get('tags'):
+                if tag not in host.get('tags', list()):
+                    self.logger.warn('Host does not match all filters '
+                                     '(tags={0})'.format(filters.get('tags')))
+                    return False
+        return True
 
-    def acquire_host(self, requested_os=None):
+    def acquire_host(self, filters=None):
         '''Acquire a host, mark it taken'''
         # Format the OS request
-        self.logger.debug('backend.acquire_host(os={0})'.format(requested_os))
-        if isinstance(requested_os, basestring):
-            requested_os = requested_os.lower()
-
+        self.logger.debug('backend.acquire_host({0})'.format(filters))
         for host_id in self.get_unallocated_host_ids():
             # Allocate the host
             self.logger.debug('Trying host #{0}'.format(host_id))
@@ -326,7 +348,7 @@ class RestBackend(object):
             # Refresh our data
             host = self.storage.get_host(host_id)
             # Enforce any user-defined requests
-            if self.host_is_os(host, requested_os) and \
+            if self.check_host_by_filters(host, filters) and \
                self.host_port_scan(host['endpoint']):
                 return self.storage.get_host(host_id)
             self.storage.update_host(host_id, {'allocated': False})

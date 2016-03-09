@@ -49,15 +49,21 @@ default:
     protocol: ssh
 
 hosts:
+  - name: server0
+    credentials:
+      key_file: keys/key.pem
+    endpoint:
+      ip: 52.29.45.36
+    
   - name: server1
     credentials:
       key_file: keys/key.pem
     endpoint:
-      ip: 192.168.100.09
-    
+      ip: 52.58.54.251
+
   - name: server2
     credentials:
-      password: clusterP@ssw0rd
+      key_file: keys/key.pem
     endpoint:
-      ip: 192.168.100.10
+      ip: 52.58.68.85
 

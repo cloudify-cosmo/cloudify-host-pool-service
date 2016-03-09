@@ -68,13 +68,21 @@ class RestBackendTest(testtools.TestCase):
             'credentials': {
                 'username': 'ubuntu',
                 'password': 'p4ssw0rd'
-            }
+            },
+            'tags': ['test_{0}'.format(idx)]
         } for idx in range(count)]
 
     def test_list_hosts(self):
         '''Test the number of existing entries'''
         self.assertEqual(len(self.backend.list_hosts()),
                          self.NUMBER_OF_HOSTS)
+        self.assertEqual(
+            len(self.backend.list_hosts(filters={'tags': ['test_0']})), 1)
+        self.assertEqual(
+            len(self.backend.list_hosts(filters={'tags': ['test_x']})), 0)
+        self.assertEqual(
+            len(self.backend.list_hosts(filters={
+                'tags': ['test_0', 'test_x']})), 0)
 
     def test_add_host_invalid(self):
         '''Test various invalid attempts at adding a host'''
@@ -141,6 +149,20 @@ class RestBackendTest(testtools.TestCase):
                     }
                 }]
             })
+        # Test with invalid tags
+        self.assertRaises(
+            exceptions.ConfigurationError,
+            self.backend.add_hosts, {
+                'hosts': [{
+                    'os': 'windows',
+                    'credentials': {
+                        'username': 'foo',
+                        'password': 'bar'
+                    },
+                    'endpoint': {'ip': '123.123.123.123'},
+                    'tags': {'foo': 'bar'}
+                }]
+            })
 
     @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
                 _mock_scan_alive)
@@ -156,6 +178,32 @@ class RestBackendTest(testtools.TestCase):
         self.assertIsNotNone(host)
         self.assertIsNotNone(host[constants.HOST_ID_KEY])
         self.assertEqual(host['allocated'], False)
+
+    @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
+                _mock_scan_alive)
+    def test_acquire_host_filter(self):
+        '''Test acquire & release a host with tag filter'''
+        # Aquire the host
+        host = self.backend.acquire_host(filters={'tags': ['test_1']})
+        self.assertIsNotNone(host)
+        self.assertIsNotNone(host[constants.HOST_ID_KEY])
+        self.assertEqual(host['allocated'], True)
+        # Release the host
+        host = self.backend.release_host(host[constants.HOST_ID_KEY])
+        self.assertIsNotNone(host)
+        self.assertIsNotNone(host[constants.HOST_ID_KEY])
+        self.assertEqual(host['allocated'], False)
+
+    @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
+                _mock_scan_alive)
+    def test_acquire_host_filter_bad(self):
+        '''Test acquire & release a host with bad tag filter'''
+        self.assertRaises(exceptions.NoHostAvailableException,
+                          self.backend.acquire_host,
+                          filters={'tags': ['test_1', 'test_x']})
+        self.assertRaises(exceptions.NoHostAvailableException,
+                          self.backend.acquire_host,
+                          filters={'tags': ['test_x']})
 
     @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
                 _mock_scan_dead)

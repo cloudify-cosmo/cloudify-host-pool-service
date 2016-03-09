@@ -29,7 +29,7 @@ setup(
     install_requires=[
         'flask',
         'flask_restful',
-        'PyYAML',
+        'PyYAML==3.10',
         'netaddr',
         'requests==2.7.0',
         'filelock==0.2.0',

@@ -106,8 +106,23 @@ class HostList(Resource):
     @staticmethod
     def get():
         '''Get the details of the host with the given host_id'''
-        app.logger.debug('GET /hosts')
-        hosts = backend.list_hosts()
+        data = request.args
+        app.logger.debug('data={0}'.format(data))
+        # Workaround for dealing with ImmutableMultiDict types
+        if data:
+            data = {
+                'os': data.get('os'),
+                'tags': data.get('tags')
+            }
+        # Normalize OS string
+        if isinstance(data.get('os'), basestring):
+            data['os'] = data['os'].lower()
+        # Convert tags to proper list
+        if isinstance(data.get('tags'), basestring):
+            data['tags'] = [x.lower() for x in data['tags'].split(',')]
+
+        app.logger.debug('GET /hosts, filters="{0}"'.format(data))
+        hosts = backend.list_hosts(filters=data)
         return hosts, httplib.OK
 
     @staticmethod
@@ -127,8 +142,8 @@ class HostAllocate(Resource):
     def post():
         '''Allocates a host from the pool'''
         data = request.get_json() or dict()
-        app.logger.debug('POST /host/allocate, data="{0}"'.format(data))
-        host = backend.acquire_host(requested_os=data.get('os'))
+        app.logger.debug('POST /host/allocate, filters="{0}"'.format(data))
+        host = backend.acquire_host(filters=data)
         return host, httplib.OK
 
 

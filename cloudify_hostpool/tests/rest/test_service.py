@@ -91,6 +91,42 @@ class ServiceTest(testtools.TestCase):
             self.assertIsNotNone(host[constants.HOST_ID_KEY])
             self.assertIsInstance(host[constants.HOST_ID_KEY], int)
 
+    def test_get_hosts_filter(self):
+        '''Tests GET /hosts with filters'''
+        # Get all linux hosts
+        result = self.app.get('/hosts?os=linux')
+        self.assertEqual(result.status_code, httplib.OK)
+        # Check the hosts themselves
+        hosts = json.loads(result.data)
+        self.assertIsInstance(hosts, list)
+        self.assertEqual(len(hosts) > 0, True)
+        for host in hosts:
+            self.assertIsInstance(host, dict)
+            self.assertIsNotNone(host[constants.HOST_ID_KEY])
+            self.assertIsInstance(host[constants.HOST_ID_KEY], int)
+        # Get all tagged hosts
+        result = self.app.get('/hosts?tags=win_2008')
+        self.assertEqual(result.status_code, httplib.OK)
+        # Check the hosts themselves
+        hosts = json.loads(result.data)
+        self.assertIsInstance(hosts, list)
+        self.assertEqual(len(hosts), 4)
+        for host in hosts:
+            self.assertIsInstance(host, dict)
+            self.assertIsNotNone(host[constants.HOST_ID_KEY])
+            self.assertIsInstance(host[constants.HOST_ID_KEY], int)
+        # Get all tagged hosts list
+        result = self.app.get('/hosts?tags=win_2008,test')
+        self.assertEqual(result.status_code, httplib.OK)
+        # Check the hosts themselves
+        hosts = json.loads(result.data)
+        self.assertIsInstance(hosts, list)
+        self.assertEqual(len(hosts), 4)
+        for host in hosts:
+            self.assertIsInstance(host, dict)
+            self.assertIsNotNone(host[constants.HOST_ID_KEY])
+            self.assertIsInstance(host[constants.HOST_ID_KEY], int)
+
     def test_get_host(self):
         '''Tests GET /host/<host_id>'''
         result = self.app.get('/hosts')
