@@ -276,7 +276,7 @@ class RestBackend(object):
         self.logger.debug('backend.add_hosts({0})'.format(config))
         if not isinstance(config, dict) or \
            not config.get('hosts'):
-            raise exceptions.HostPoolHTTPException('Invalid hosts format')
+            raise exceptions.UnexpectedData('Empty hosts object')
         hosts = HostAlchemist(config).parse()
         return self.storage.add_hosts(hosts)
 
@@ -296,7 +296,7 @@ class RestBackend(object):
         if not host_id or not isinstance(host_id, int):
             raise exceptions.HostNotFoundException(host_id)
         if not isinstance(updates, dict):
-            raise exceptions.HostPoolHTTPException('Invalid data format')
+            raise exceptions.UnexpectedData('Updates must be a JSON object')
         orig = self.storage.get_host(host_id)
         if not orig:
             raise exceptions.HostNotFoundException(host_id)

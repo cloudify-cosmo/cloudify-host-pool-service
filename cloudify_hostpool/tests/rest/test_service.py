@@ -29,6 +29,8 @@ import logging
 from cloudify_hostpool import constants
 from cloudify_hostpool.tests import rest
 
+# pylint: disable=R0904
+
 
 def _mock_scan_alive(self, _):
     '''Simulates all hosts being "alive"'''
@@ -68,9 +70,7 @@ class ServiceTest(testtools.TestCase):
         service.app.logger.handlers.extend(gunicorn_handlers)
         service.app.logger.info('Flask, Gunicorn logging enabled')
         # force database initial load
-        print 'START reset_backend()'
         service.reset_backend()
-        print 'END reset_backend()'
         self.app = service.app.test_client()
         self.app.post('/hosts',
                       data=json.dumps(config),
@@ -78,6 +78,29 @@ class ServiceTest(testtools.TestCase):
 
     def tearDown(self):
         testtools.TestCase.tearDown(self)
+
+    def test_add_host_no_data(self):
+        '''Tests POSt /hosts with non-JSON data'''
+        result = self.app.post('/hosts')
+        self.assertEqual(result.status_code, httplib.BAD_REQUEST)
+
+    def test_add_host_bad_format(self):
+        '''Tests POSt /hosts with non-JSON data'''
+        data = {
+            'os': 'linux',
+            'endpoint': {
+                'protocol': 'ssh',
+                'ip': '192.168.1.100',
+                'port': 22
+            },
+            'credentials': {
+                'username': 'mock',
+                'password': 'mock-password'
+            }
+        }
+        result = self.app.post('/hosts',
+                               data=json.dumps(data))
+        self.assertEqual(result.status_code, httplib.BAD_REQUEST)
 
     def test_get_hosts(self):
         '''Tests GET /hosts'''
@@ -267,6 +290,14 @@ class ServiceTest(testtools.TestCase):
                                data=json.dumps({'os': 1234}),
                                content_type='application/json')
         self.assertEqual(result.status_code, 515)
+
+    @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
+                _mock_scan_alive)
+    def test_allocate_bad_data_format(self):
+        '''Tests POST /host/allocate without JSON header'''
+        result = self.app.post('/host/allocate',
+                               data="{'os': 'linux'}")
+        self.assertEqual(result.status_code, httplib.BAD_REQUEST)
 
     @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
                 _mock_scan_dead)

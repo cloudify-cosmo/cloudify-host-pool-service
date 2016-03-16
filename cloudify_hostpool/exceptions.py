@@ -17,6 +17,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RESTful service exception handling
 '''
+import httplib
 
 
 class HostPoolHTTPException(Exception):
@@ -58,10 +59,26 @@ class HostNotFoundException(HostPoolHTTPException):
 
     def __init__(self, host_id):
         self.host_id = host_id
-        super(HostNotFoundException, self).__init__(404)
+        super(HostNotFoundException, self).__init__(httplib.NOT_FOUND)
 
     def __str__(self):
         return 'Cannot find requested host: {0}'.format(self.host_id)
+
+
+class UnexpectedData(HostPoolHTTPException):
+
+    """
+    Raised when there unexpected or unrecognized data sent
+    Common case: non-JSON requests to JSON endpoints
+
+    """
+
+    def __init__(self, message):
+        self.message = message
+        super(UnexpectedData, self).__init__(httplib.BAD_REQUEST)
+
+    def __str__(self):
+        return 'Unexpected data recieved: {0}'.format(self.message)
 
 
 class ConfigurationError(Exception):
