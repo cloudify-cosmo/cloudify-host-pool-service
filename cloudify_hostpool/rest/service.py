@@ -28,6 +28,7 @@ from flask import Flask, request
 from flask_restful import Api, Resource
 
 from cloudify_hostpool.rest import backend as rest_backend
+from cloudify_hostpool import exceptions
 
 # Globals
 app, api, backend = None, None, None
@@ -75,6 +76,17 @@ class Service(Api):
 api = Service(app)
 
 
+# Override the default JSON error handler
+def handle_json_exception(exc):
+    '''Handles bad service requests involving data type conversion'''
+    app.logger.debug('handle_json_exception({0})'.format(exc))
+    app.logger.debug('requests? {0}'.format(request.data))
+    app.logger.debug('headers? {0}'.format(request.headers))
+    if not request.data:
+        return dict()
+    raise exceptions.HostPoolHTTPException(httplib.BAD_REQUEST)
+
+
 class Host(Resource):
     '''Host object handling'''
     @staticmethod
@@ -94,7 +106,8 @@ class Host(Resource):
     @staticmethod
     def patch(host_id):
         '''Updates a host in the host pool'''
-        data = request.get_json() or dict()
+        request.on_json_loading_failed = handle_json_exception
+        data = request.get_json(force=True) or dict()
         app.logger.debug('PATCH /host/{0}, data="{1}"'.format(
             host_id, data))
         host = backend.update_host(host_id, data)
@@ -128,7 +141,8 @@ class HostList(Resource):
     @staticmethod
     def post():
         '''Adds host(s) to the host pool'''
-        hosts = request.get_json()
+        request.on_json_loading_failed = handle_json_exception
+        hosts = request.get_json(force=True) or dict()
         app.logger.debug('POST /hosts, data="{0}"'.format(hosts))
         if not hosts:
             return 'Data must be a valid JSON array', httplib.BAD_REQUEST
@@ -141,7 +155,8 @@ class HostAllocate(Resource):
     @staticmethod
     def post():
         '''Allocates a host from the pool'''
-        data = request.get_json() or dict()
+        request.on_json_loading_failed = handle_json_exception
+        data = request.get_json(force=True) or dict()
         app.logger.debug('POST /host/allocate, filters="{0}"'.format(data))
         host = backend.acquire_host(filters=data)
         return host, httplib.OK
