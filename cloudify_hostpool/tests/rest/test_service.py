@@ -25,6 +25,7 @@ import json
 import yaml
 import httplib
 import logging
+import threading
 
 from cloudify_hostpool import constants
 from cloudify_hostpool.tests import rest
@@ -305,3 +306,96 @@ class ServiceTest(testtools.TestCase):
         '''Tests allocate with no available hosts'''
         result = self.app.post('/host/allocate')
         self.assertEqual(result.status_code, 515)
+
+
+class ServiceConcurrencyTest(testtools.TestCase):
+    '''Tests class for the REST service using concurrency'''
+    _workdir = None
+
+    def setUp(self):
+        testtools.TestCase.setUp(self)
+        config_path = os.path.join(
+            os.path.dirname(rest.__file__),
+            'resources',
+            'host-pool.yaml'
+        )
+        config = dict()
+        with open(config_path, 'r') as f_cfg:
+            config = yaml.load(f_cfg)
+
+        from cloudify_hostpool.rest import service
+
+        # flask feature, should provider more detailed errors
+        service.app.config['TESTING'] = True
+        # configure Flask to Gunicorn logging
+        gunicorn_handlers = logging.getLogger('gunicorn.error').handlers
+        service.app.logger.handlers.extend(gunicorn_handlers)
+        service.app.logger.info('Flask, Gunicorn logging enabled')
+        # force database initial load
+        service.reset_backend()
+        self.app = service.app.test_client()
+        self.app.post('/hosts',
+                      data=json.dumps(config),
+                      content_type='application/json')
+
+    def tearDown(self):
+        testtools.TestCase.tearDown(self)
+
+    def allocate_only(self, thread_id, retvals, data=None, req_os=None):
+        '''allocate helper for threads'''
+        # Allocate
+        result = self.app.post('/host/allocate',
+                               data=json.dumps(data),
+                               content_type='application/json')
+        self.assertEqual(result.status_code, httplib.OK)
+        host = json.loads(result.data)
+        self.assertIsInstance(host, dict)
+        self.assertIsInstance(host[constants.HOST_ID_KEY], int)
+        self.assertEqual(host['allocated'], True)
+        if req_os:
+            self.assertEqual(host['os'], req_os)
+        retvals[thread_id] = host[constants.HOST_ID_KEY]
+
+    def deallocate_all(self):
+        '''Deallocates all hosts'''
+        result = self.app.get('/hosts')
+        hosts = json.loads(result.data)
+        for host in hosts:
+            # Deallocate
+            result = self.app.delete('/host/{0}/deallocate'.format(
+                host[constants.HOST_ID_KEY]))
+            self.assertEqual(result.status_code, httplib.NO_CONTENT)
+            # Double check deallocation
+            result = self.app.get('/host/{0}'.format(
+                host[constants.HOST_ID_KEY]))
+            self.assertEqual(result.status_code, httplib.OK)
+            host = json.loads(result.data)
+            self.assertIsInstance(host, dict)
+            self.assertIsInstance(host[constants.HOST_ID_KEY], int)
+            self.assertEqual(host['allocated'], False)
+
+    @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
+                _mock_scan_alive)
+    def test_multithread_acquire(self):
+        '''Tests allocate with multiple threads'''
+        # This should not exceed the number of hosts being acquired
+        max_threads = 4
+        threads = list()
+        retvals = [None] * max_threads
+        for thread_id in range(max_threads):
+            threads.append(
+                threading.Thread(
+                    target=self.allocate_only,
+                    args=(thread_id, retvals, {'os': 'linux'}, 'linux',)
+                )
+            )
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.deallocate_all()
+        # Check if any threads could not acquire a host
+        self.assertEqual(None in retvals, False)
+        # Check if any threads ended up with the same host ID as another
+        duplicate_hosts = set([x for x in retvals if retvals.count(x) > 1])
+        self.assertEqual(len(duplicate_hosts), 0)
