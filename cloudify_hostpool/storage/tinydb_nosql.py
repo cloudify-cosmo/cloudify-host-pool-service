@@ -22,10 +22,20 @@ from contextlib import contextmanager
 from cloudify_hostpool.storage.base import Storage
 from cloudify_hostpool import constants
 from tinydb import TinyDB
+import filelock
 
+LOCK_FILE = 'db_ops.lck'
 DB_FILENAME = 'db_hostpool.json'
 TBL_HOSTS = 'hosts'
-TBL_POOL = 'pool'
+
+
+def locked(func):
+    '''Decorate to provide locking'''
+    def wrapper(*args, **kwargs):
+        '''Post processor'''
+        with filelock.FileLock(LOCK_FILE):
+            return func(*args, **kwargs)
+    return wrapper
 
 
 def postprocess_host(func):
@@ -81,7 +91,6 @@ class Database(Storage):
     def __init__(self, storage=None):
         self.db_filename = storage or DB_FILENAME
         self.tbl_hosts = TBL_HOSTS
-        self.tbl_pool = TBL_POOL
 
     def init_data(self):
         '''Wipes all data'''
@@ -107,6 +116,7 @@ class Database(Storage):
             return tbl.get(eid=eid)
 
     @postprocess_hosts
+    @locked
     def get_hosts(self):
         '''Retrieves all host entries from the database
 
