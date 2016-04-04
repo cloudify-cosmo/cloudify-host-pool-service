@@ -1,0 +1,10 @@
+1.1:
+ - Rewrote API server
+ - added service logging
+ - changed backend to TinyDB
+ - added mixed-OS pool support
+ - Removed requirement for config YAML file
+ - Added non-daemon service option
+ - Adding tcp scan
+ - Added flask-restful exception handling
+ - Adding init script, debug loggers, and new lifecycle scripts

@@ -339,19 +339,22 @@ class RestBackend(object):
 
     def acquire_host(self, filters=None):
         '''Acquire a host, mark it taken'''
-        # Format the OS request
         self.logger.debug('backend.acquire_host({0})'.format(filters))
-        for host_id in self.get_unallocated_host_ids():
-            # Allocate the host
-            self.logger.debug('Trying host #{0}'.format(host_id))
-            self.storage.update_host(host_id, {'allocated': True})
-            # Refresh our data
-            host = self.storage.get_host(host_id)
+        # Configure a file lock
+        lock = filelock.FileLock('host_acquire.lck')
+        for host in self.get_unallocated_hosts():
+            # Get host ID
+            host_id = host[constants.HOST_ID_KEY]
             # Enforce any user-defined requests
             if self.check_host_by_filters(host, filters) and \
                self.host_port_scan(host['endpoint']):
-                return self.storage.get_host(host_id)
-            self.storage.update_host(host_id, {'allocated': False})
+                # Ensure the host is still free
+                with lock.acquire():
+                    _host = self.storage.get_host(host_id)
+                    if not _host['allocated']:
+                        self.storage.update_host(host_id,
+                                                 {'allocated': True})
+                        return self.storage.get_host(host_id)
         # We didn't manage to acquire any host
         raise exceptions.NoHostAvailableException()
 
@@ -359,25 +362,28 @@ class RestBackend(object):
         '''Release a host, free it'''
         if not host_id or not isinstance(host_id, int):
             raise exceptions.HostNotFoundException(host_id)
-        self.storage.update_host(host_id, {'allocated': False})
-        return self.storage.get_host(host_id)
+        # Get a file lock
+        lock = filelock.FileLock('host_acquire.lck')
+        with lock.acquire():
+            self.storage.update_host(host_id, {'allocated': False})
+            return self.storage.get_host(host_id)
 
     def get_host(self, host_id):
         '''Gets a host + key data'''
         self.logger.debug('backend.get_host({0})'.format(host_id))
         if not host_id or not isinstance(host_id, int):
             raise exceptions.HostNotFoundException(host_id)
-        host = self.storage.get_host(host_id)
-        if not host:
-            raise exceptions.HostNotFoundException(host_id)
-        return host
+        # Get a file lock
+        lock = filelock.FileLock('host_acquire.lck')
+        with lock.acquire():
+            host = self.storage.get_host(host_id)
+            if not host:
+                raise exceptions.HostNotFoundException(host_id)
+            return host
 
-    def get_unallocated_host_ids(self):
-        '''Get a generator for free hosts'''
-        hosts = self.list_hosts()
-        for host in hosts:
-            if not host['allocated']:
-                yield host[constants.HOST_ID_KEY]
+    def get_unallocated_hosts(self):
+        '''Get free hosts'''
+        return [x for x in self.list_hosts() if not x['allocated']]
 
     def host_port_scan(self, endpoint):
         '''Scans a TCP port'''
