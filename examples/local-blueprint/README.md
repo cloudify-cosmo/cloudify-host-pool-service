@@ -7,7 +7,9 @@ Let see how this is done:
 
 ### Step 1: Initialize
 
-`cfy local init -p local-blueprint.yaml` <br>
+`cfy profiles use local`
+
+`cfy init local-blueprint.yaml` <br>
 
 This command (as the name suggests) initializes your working directory to work with the given blueprint.
 Now, you can run any type of workflows on this blueprint. <br>
@@ -17,35 +19,41 @@ Now, you can run any type of workflows on this blueprint. <br>
 Lets run the `install` workflow: <br>
 
 ```bash
-cfy local execute -w install
-2015-04-01 17:39:39 CFY <local> [host_79e11] Creating node
-2015-04-01 17:39:39 CFY <local> [host_79e11] Configuring node
-2015-04-01 17:39:40 CFY <local> [host_79e11] Starting node
-2015-04-01 17:39:40 CFY <local> [host_pool_service_fd5bd] Creating node
-2015-04-01 17:39:40 CFY <local> [host_pool_service_fd5bd.create] Sending task 'script_runner.tasks.run'
-2015-04-01 17:39:40 CFY <local> [host_pool_service_fd5bd.create] Task started 'script_runner.tasks.run'
-2015-04-01 17:39:41 LOG <local> [host_pool_service_fd5bd.create] INFO: Executing: /tmp/tmpFDw8of-create.sh
-2015-04-01 17:39:41 LOG <local> [host_pool_service_fd5bd.create] INFO: Creating directory /tmp/cloudify-host-pool-serviceTcJqKm
-2015-04-01 17:39:41 LOG <local> [host_pool_service_fd5bd.create] INFO: Creating virtualenv
-2015-04-01 17:39:43 LOG <local> [host_pool_service_fd5bd.create] INFO: Installing gunicorn
-2015-04-01 17:39:44 LOG <local> [host_pool_service_fd5bd.create] INFO: Installing cloudify-host-pool-service
-2015-04-01 17:39:53 LOG <local> [host_pool_service_fd5bd.create] INFO: Execution done (return_code=0): /tmp/tmpFDw8of-create.sh
-2015-04-01 17:39:53 CFY <local> [host_pool_service_fd5bd.create] Task succeeded 'script_runner.tasks.run'
-2015-04-01 17:39:53 CFY <local> [host_pool_service_fd5bd] Configuring node
-2015-04-01 17:39:53 CFY <local> [host_pool_service_fd5bd.configure] Sending task 'script_runner.tasks.run'
-2015-04-01 17:39:53 CFY <local> [host_pool_service_fd5bd.configure] Task started 'script_runner.tasks.run'
-2015-04-01 17:39:53 LOG <local> [host_pool_service_fd5bd.configure] INFO: Downloading pool configuration file
-2015-04-01 17:39:53 LOG <local> [host_pool_service_fd5bd.configure] INFO: Creating service configuration file
-2015-04-01 17:39:53 LOG <local> [host_pool_service_fd5bd.configure] INFO: Downloading keyfile: keys/key.pem
-2015-04-01 17:39:53 CFY <local> [host_pool_service_fd5bd.configure] Task succeeded 'script_runner.tasks.run'
-2015-04-01 17:39:54 CFY <local> [host_pool_service_fd5bd] Starting node
-2015-04-01 17:39:54 CFY <local> [host_pool_service_fd5bd.start] Sending task 'script_runner.tasks.run'
-2015-04-01 17:39:54 CFY <local> [host_pool_service_fd5bd.start] Task started 'script_runner.tasks.run'
-2015-04-01 17:39:54 LOG <local> [host_pool_service_fd5bd.start] INFO: Executing: /tmp/tmpxY_Otx-start.sh
-2015-04-01 17:39:54 LOG <local> [host_pool_service_fd5bd.start] INFO: Starting cloudify-host-pool-service with command: gunicorn --workers=5 --pid=/tmp/cloudify-host-pool-serviceTcJqKm/work/gunicorn.pid --log-level=INFO --log-file=/tmp/cloudify-host-pool-serviceTcJqKm/work/gunicorn.log --bind 0.0.0.0:8080 --daemon cloudify_hostpool.rest.service:app
-2015-04-01 17:39:55 LOG <local> [host_pool_service_fd5bd.start] INFO: Execution done (return_code=0): /tmp/tmpxY_Otx-start.sh
-2015-04-01 17:39:55 CFY <local> [host_pool_service_fd5bd.start] Task succeeded 'script_runner.tasks.run'
-2015-04-01 17:39:55 CFY <local> 'install' workflow execution succeeded
+cfy executions start -b local-blueprint install
+2017-05-10 15:55:59.094  CFY <local-blueprint> Starting 'install' workflow execution
+2017-05-10 15:55:59.213  CFY <local-blueprint> [host_flp0ik] Creating node
+2017-05-10 15:55:59.641  CFY <local-blueprint> [host_flp0ik] Configuring node
+2017-05-10 15:56:00.021  CFY <local-blueprint> [host_flp0ik] Starting node
+2017-05-10 15:56:01.017  CFY <local-blueprint> [host_pool_service_52hipx] Creating node
+2017-05-10 15:56:01.106  CFY <local-blueprint> [host_pool_service_52hipx.create] Sending task 'script_runner.tasks.run'
+2017-05-10 15:56:01.131  CFY <local-blueprint> [host_pool_service_52hipx.create] Task started 'script_runner.tasks.run'
+2017-05-10 15:56:01.313  LOG <local-blueprint> [host_pool_service_52hipx.create] INFO: Creating working directory: "/tmp"
+2017-05-10 15:56:01.313  LOG <local-blueprint> [host_pool_service_52hipx.create] INFO: Installing required Python packages
+2017-05-10 15:56:01.313  LOG <local-blueprint> [host_pool_service_52hipx.create] INFO: Installing Python package "gunicorn==19.4.5"
+2017-05-10 15:56:01.908  LOG <local-blueprint> [host_pool_service_52hipx.create] INFO: Installing Python package "pyyaml==3.11"
+2017-05-10 15:56:02.585  LOG <local-blueprint> [host_pool_service_52hipx.create] INFO: Installing Python package "https://github.com/cloudify-cosmo/cloudify-host-pool-service/archive/1.1.zip"
+2017-05-10 15:56:05.472  LOG <local-blueprint> [host_pool_service_52hipx.create] INFO: Setting runtime_property "working_directory" to "/tmp"
+2017-05-10 15:56:05.473  CFY <local-blueprint> [host_pool_service_52hipx.create] Task succeeded 'script_runner.tasks.run'
+2017-05-10 15:56:05.751  CFY <local-blueprint> [host_pool_service_52hipx] Configuring node
+2017-05-10 15:56:05.818  CFY <local-blueprint> [host_pool_service_52hipx.configure] Sending task 'script_runner.tasks.run'
+2017-05-10 15:56:05.865  CFY <local-blueprint> [host_pool_service_52hipx.configure] Task started 'script_runner.tasks.run'
+2017-05-10 15:56:06.046  LOG <local-blueprint> [host_pool_service_52hipx.configure] INFO: Loading Host-Pool seed hosts
+2017-05-10 15:56:06.051  LOG <local-blueprint> [host_pool_service_52hipx.configure] INFO: Converting host key files from blueprint
+2017-05-10 15:56:06.055  CFY <local-blueprint> [host_pool_service_52hipx.configure] Task succeeded 'script_runner.tasks.run'
+2017-05-10 15:56:06.433  CFY <local-blueprint> [host_pool_service_52hipx] Starting node
+2017-05-10 15:56:06.520  CFY <local-blueprint> [host_pool_service_52hipx.start] Sending task 'script_runner.tasks.run'
+2017-05-10 15:56:06.547  CFY <local-blueprint> [host_pool_service_52hipx.start] Task started 'script_runner.tasks.run'
+2017-05-10 15:56:06.725  LOG <local-blueprint> [host_pool_service_52hipx.start] INFO: Downloading Host-Pool service init script
+2017-05-10 15:56:06.743  LOG <local-blueprint> [host_pool_service_52hipx.start] INFO: (sudo) Starting the Host-Pool service
+Starting Cloudify Host-Pool service...
+Cloudify Host-Pool service started with pid 12525
+2017-05-10 15:56:09.030  LOG <local-blueprint> [host_pool_service_52hipx.start] INFO: (sudo) Enabling the Host-Pool service on boot
+ System start/stop links for /etc/init.d/cloudify-hostpool already exist.
+2017-05-10 15:56:09.052  LOG <local-blueprint> [host_pool_service_52hipx.start] INFO: [Attempt 0/20] Liveness detection check
+2017-05-10 15:56:09.107  LOG <local-blueprint> [host_pool_service_52hipx.start] INFO: Host-Pool service is alive
+2017-05-10 15:56:09.107  LOG <local-blueprint> [host_pool_service_52hipx.start] INFO: Installing seed hosts data
+2017-05-10 15:56:09.111  CFY <local-blueprint> [host_pool_service_52hipx.start] Task succeeded 'script_runner.tasks.run'
+2017-05-10 15:56:09.527  CFY <local-blueprint> 'install' workflow execution succeeded
 ```
 
 This command will install all the application components on you local machine.
@@ -60,4 +68,4 @@ shows allocated hosts.**
 
 To uninstall the application we run the `uninstall` workflow: <br>
 
-`cfy local execute -w uninstall`
+`cfy executions start -b local-blueprint uninstall`
