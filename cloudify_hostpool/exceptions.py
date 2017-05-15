@@ -78,7 +78,7 @@ class UnexpectedData(HostPoolHTTPException):
         super(UnexpectedData, self).__init__(httplib.BAD_REQUEST)
 
     def __str__(self):
-        return 'Unexpected data recieved: {0}'.format(self.message)
+        return 'Unexpected data received: {0}'.format(self.message)
 
 
 class ConfigurationError(Exception):

@@ -282,6 +282,9 @@ class ServiceTest(testtools.TestCase):
                                data=json.dumps({'os': 'bados'}),
                                content_type='application/json')
         self.assertEqual(result.status_code, 515)
+        response = json.loads(result.data)
+        self.assertIn('error', response)
+        self.assertIn('Cannot acquire host', response['error'])
 
     @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
                 _mock_scan_alive)
@@ -291,6 +294,9 @@ class ServiceTest(testtools.TestCase):
                                data=json.dumps({'os': 1234}),
                                content_type='application/json')
         self.assertEqual(result.status_code, 515)
+        response = json.loads(result.data)
+        self.assertIn('error', response)
+        self.assertIn('Cannot acquire host', response['error'])
 
     @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
                 _mock_scan_alive)
@@ -299,6 +305,9 @@ class ServiceTest(testtools.TestCase):
         result = self.app.post('/host/allocate',
                                data="{'os': 'linux'}")
         self.assertEqual(result.status_code, httplib.BAD_REQUEST)
+        response = json.loads(result.data)
+        self.assertIn('error', response)
+        self.assertIn('Unexpected data', response['error'])
 
     @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
                 _mock_scan_dead)
@@ -306,6 +315,9 @@ class ServiceTest(testtools.TestCase):
         '''Tests allocate with no available hosts'''
         result = self.app.post('/host/allocate')
         self.assertEqual(result.status_code, 515)
+        response = json.loads(result.data)
+        self.assertIn('error', response)
+        self.assertIn('Cannot acquire host', response['error'])
 
 
 class ServiceConcurrencyTest(testtools.TestCase):

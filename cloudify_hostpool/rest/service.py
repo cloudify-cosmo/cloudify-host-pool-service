@@ -68,7 +68,7 @@ class Service(Api):
             app.logger.error('Exception.status_code: {0}'.format(
                 e.status_code))
             return self.make_response({
-                'message': str(e)
+                'error': str(e)
             }, e.status_code)
         return super(Service, self).handle_error(e)
 
@@ -84,7 +84,7 @@ def handle_json_exception(exc):
     app.logger.debug('headers? {0}'.format(request.headers))
     if not request.data:
         return dict()
-    raise exceptions.HostPoolHTTPException(httplib.BAD_REQUEST)
+    raise exceptions.UnexpectedData(request.data)
 
 
 class Host(Resource):
