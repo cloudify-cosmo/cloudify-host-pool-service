@@ -24,6 +24,15 @@ from ecosystem_tests.dorkl import (
     cleanup_on_failure, prepare_test
 )
 
+OS_VERSION = '3.2.15'
+OS_WAGON = 'https://github.com/cloudify-cosmo/cloudify-openstack-plugin/' \
+           'releases/download/{v}/cloudify_openstack_plugin-{v}-py27-none-' \
+           'linux_x86_64-centos-Core.wgn'.format(v=OS_VERSION)
+OS_PLUGIN = 'https://github.com/cloudify-cosmo/' \
+            'cloudify-openstack-plugin/releases/download/' \
+            '{v}/plugin.yaml'.format(v=OS_VERSION)
+PLUGINS_TO_UPLOAD = [(OS_WAGON, OS_PLUGIN)]
+
 
 SECRETS_TO_CREATE = {
     'openstack_username': False,
@@ -43,7 +52,8 @@ SECRETS_TO_CREATE = {
 }
 
 
-prepare_test(secrets=SECRETS_TO_CREATE,
+prepare_test(plugins=PLUGINS_TO_UPLOAD,
+             secrets=SECRETS_TO_CREATE,
              plugin_test=False)
 
 virtual_machine_list = ['examples/blueprint.yaml']
