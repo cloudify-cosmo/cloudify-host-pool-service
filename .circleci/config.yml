@@ -227,16 +227,16 @@ workflows:
       - py3_compat
       - unittests_py27
       - unittests_py36
-#      - wagon:
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
-#      - integration_tests:
-#          requires:
-#            - wagon
-#          filters:
-#            branches:
-#              only: /([0-9\.]*\-build|master|dev)/
+      - wagon:
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev|CY-2550-Host-Pool-Python3)/
+      - integration_tests:
+          requires:
+            - wagon
+          filters:
+            branches:
+              only: /([0-9\.]*\-build|master|dev|CY-2550-Host-Pool-Python3)/
 #      - release:
 #          filters:
 #            branches:
