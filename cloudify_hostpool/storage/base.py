@@ -20,11 +20,10 @@
 
 import abc
 
-from six import add_metaclass
+from .._compat import ABC
 
 
-@add_metaclass(abc.ABCMeta)
-class Storage(object):
+class Storage(ABC):
     '''
     Interface for storage transactional operations. All of these operations
     will be called by the server when trying to acquire or release a host.

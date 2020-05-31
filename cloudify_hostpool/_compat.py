@@ -23,10 +23,15 @@ PY2 = sys.version_info[0] == 2
 if PY2:
     import httplib
     text_type = unicode
+    from abc import ABCMeta
+
+    class ABC(object):
+        __metaclass__ = ABCMeta
 else:
     import http.client as httplib
     text_type = str
+    from abc import ABC
 
 __all__ = [
-    'PY2', 'text_type', 'httplib'
+    'PY2', 'text_type', 'httplib', 'ABC'
 ]

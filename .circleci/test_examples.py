@@ -59,7 +59,7 @@ prepare_test(plugins=PLUGINS_TO_UPLOAD,
 virtual_machine_list = ['examples/blueprint.yaml']
 infra_path = 'examples/blueprint-examples/virtual-machine/{0}.yaml'
 infra_name = 'openstack'
-inputs = json.loads(json.dumps({}))
+inputs = 'infra_name={0}'.format(infra_name)
 
 
 @pytest.fixture(scope='function', params=virtual_machine_list)
