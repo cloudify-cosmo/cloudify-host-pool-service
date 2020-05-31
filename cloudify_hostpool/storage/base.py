@@ -21,13 +21,11 @@
 import abc
 
 
-class Storage(object):
+class Storage(object, metaclass=abc.ABCMeta):
     '''
     Interface for storage transactional operations. All of these operations
     will be called by the server when trying to acquire or release a host.
     '''
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def init_data(self):

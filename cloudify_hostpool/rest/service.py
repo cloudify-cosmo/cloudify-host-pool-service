@@ -27,8 +27,9 @@ import logging
 from flask import Flask, request
 from flask_restful import Api, Resource
 
-from cloudify_hostpool.rest import backend as rest_backend
-from cloudify_hostpool import exceptions
+from .. import exceptions
+from .._compat import text_type
+from ..rest import backend as rest_backend
 
 # Globals
 app, api, backend = None, None, None
@@ -128,10 +129,10 @@ class HostList(Resource):
                 'tags': data.get('tags')
             }
         # Normalize OS string
-        if isinstance(data.get('os'), basestring):
+        if isinstance(data.get('os'), text_type):
             data['os'] = data['os'].lower()
         # Convert tags to proper list
-        if isinstance(data.get('tags'), basestring):
+        if isinstance(data.get('tags'), text_type):
             data['tags'] = [x.lower() for x in data['tags'].split(',')]
 
         app.logger.debug('GET /hosts, filters="{0}"'.format(data))

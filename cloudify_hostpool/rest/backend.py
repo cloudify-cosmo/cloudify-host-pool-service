@@ -30,9 +30,10 @@ import socket
 from netaddr import IPNetwork
 from netaddr.core import AddrFormatError
 
-from cloudify_hostpool import constants
-from cloudify_hostpool.storage.tinydb_nosql import Database
-from cloudify_hostpool import exceptions
+from .._compat import text_type
+from .. import constants
+from .. import exceptions
+from ..storage.tinydb_nosql import Database
 
 # we currently don't expose these in the configuration because its somewhat
 # internal. perhaps at a later time we can have this configurable, at which
@@ -132,7 +133,7 @@ class HostAlchemist(object):
     def validate_host_endpoint(endpoint, check_ip_range=True):
         '''Validates a host endpoint'''
         if 'ip' not in endpoint or \
-           not isinstance(endpoint['ip'], basestring):
+           not isinstance(endpoint['ip'], text_type):
             raise exceptions.ConfigurationError(
                 'Host endpoint must have a valid "ip" key')
         if 'port' not in endpoint or \
@@ -140,7 +141,7 @@ class HostAlchemist(object):
             raise exceptions.ConfigurationError(
                 'Host endpoint must have a valid "port" key')
         if 'protocol' not in endpoint or \
-           not isinstance(endpoint['protocol'], basestring):
+           not isinstance(endpoint['protocol'], text_type):
             raise exceptions.ConfigurationError(
                 'Host endpoint must have a valid "protocol" key')
         try:
@@ -164,22 +165,22 @@ class HostAlchemist(object):
             raise exceptions.ConfigurationError(
                 'Host credentials must be a valid JSON object')
         if not credentials.get('username') or \
-           not isinstance(credentials.get('username'), basestring):
+           not isinstance(credentials.get('username'), text_type):
             raise exceptions.ConfigurationError(
                 'No username set for host')
         if credentials.get('password') and \
-           not isinstance(credentials.get('password'), basestring):
+           not isinstance(credentials.get('password'), text_type):
             raise exceptions.ConfigurationError(
                 'Invalid, non-string password set for host')
         if credentials.get('key') and \
-           not isinstance(credentials.get('key'), basestring):
+           not isinstance(credentials.get('key'), text_type):
             raise exceptions.ConfigurationError(
                 'Invalid, non-string key set for host')
 
     def validate_host(self, host, check_ip_range=True):
         '''Validates host data'''
         # Validate OS type
-        if not isinstance(host['os'], basestring) or \
+        if not isinstance(host['os'], text_type) or \
            host['os'] not in ['windows', 'linux']:
             raise exceptions.ConfigurationError(
                 'Invalid or missing OS for host')
@@ -318,7 +319,7 @@ class RestBackend(object):
         # Check filters using a True fall-through
         # Check OS
         if filters.get('os'):
-            if not isinstance(filters.get('os'), basestring):
+            if not isinstance(filters.get('os'), text_type):
                 self.logger.warn('Invalid, non-string requested OS provided')
                 return False
             if filters.get('os').lower() != host.get('os', '').lower():
