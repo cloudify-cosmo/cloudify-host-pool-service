@@ -33,6 +33,7 @@ setup(
         'netaddr',
         'requests==2.7.0',
         'filelock==0.2.0',
-        'tinydb'
+        'tinydb>=3.15.0,<4.0.0',
+        'six'
     ]
 )

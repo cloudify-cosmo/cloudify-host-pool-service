@@ -17,7 +17,7 @@
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RESTful service exception handling
 '''
-import httplib
+from ._compat import httplib
 
 
 class HostPoolHTTPException(Exception):

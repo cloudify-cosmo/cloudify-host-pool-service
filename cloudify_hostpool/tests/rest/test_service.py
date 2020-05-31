@@ -25,13 +25,13 @@ import os
 import mock
 import json
 import yaml
-import httplib
 import logging
 import threading
 import testtools
 
 from ... import constants
 from ...tests import rest
+from ..._compat import httplib
 
 
 def _mock_scan_alive(self, _):

@@ -22,14 +22,13 @@
 # pylint: disable=C0103
 # pylint: disable=W0603
 
-import httplib
 import logging
 
 from flask import Flask, request
 from flask_restful import Api, Resource
 
 from .. import exceptions
-from .._compat import text_type
+from .._compat import text_type, httplib
 from ..rest import backend as rest_backend
 
 # Globals

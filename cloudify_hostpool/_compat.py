@@ -17,16 +17,16 @@
 # flake8: noqa
 
 import sys
+
 PY2 = sys.version_info[0] == 2
 
-
 if PY2:
+    import httplib
     text_type = unicode
-
 else:
+    import http.client as httplib
     text_type = str
 
-
 __all__ = [
-    'PY2', 'text_type',
+    'PY2', 'text_type', 'httplib'
 ]

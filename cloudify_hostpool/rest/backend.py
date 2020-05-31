@@ -76,13 +76,13 @@ class HostAlchemist(object):
                 # This is an IP address range endpoint
                 for idx, sip in enumerate(list(hip)):
                     shost = deepcopy(host)
-                    shost['endpoint']['ip'] = str(sip)
+                    shost['endpoint']['ip'] = text_type(sip)
                     if hname:
                         shost['name'] = '{0}_{1}'.format(hname, idx)
                     hosts.append(shost)
             else:
                 # This is a single IP endpoint
-                host['endpoint']['ip'] = str(list(hip)[0])
+                host['endpoint']['ip'] = text_type(list(hip)[0])
                 hosts.append(host)
         # Post-process hosts
         for host in hosts:
@@ -246,7 +246,7 @@ class HostAlchemist(object):
 
 def dict_update(orig, updates):
     '''Recursively merges two objects'''
-    for key, val in updates.iteritems():
+    for key, val in updates.items():
         if isinstance(val, Mapping):
             orig[key] = dict_update(orig.get(key, {}), val)
         else:

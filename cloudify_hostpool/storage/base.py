@@ -12,7 +12,6 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-
 '''
     cloudify_hostpool.storage.base
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -21,8 +20,11 @@
 
 import abc
 
+from six import add_metaclass
 
-class Storage(object, metaclass=abc.ABCMeta):
+
+@add_metaclass(abc.ABCMeta)
+class Storage(object):
     '''
     Interface for storage transactional operations. All of these operations
     will be called by the server when trying to acquire or release a host.

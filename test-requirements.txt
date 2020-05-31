@@ -2,4 +2,7 @@ mock>=1.0.1
 subprocess32>=3.2.6
 testtools
 requests==2.7.0
-https://github.com/cloudify-cosmo/cloudify-common/archive/4.4.zip
+https://github.com/cloudify-cosmo/cloudify-common/archive/master.zip
+flake8
+nose
+nose-cov
