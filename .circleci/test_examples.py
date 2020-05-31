@@ -46,7 +46,8 @@ SECRETS_TO_CREATE = {
 prepare_test(secrets=SECRETS_TO_CREATE,
              plugin_test=False)
 
-virtual_machine_list = ['blueprint/blueprint.yaml']
+virtual_machine_list = ['examples/blueprint.yaml']
+infra_path = 'examples/blueprint-examples/virtual-machine/{0}.yaml'
 infra_name = 'openstack'
 inputs = json.loads(json.dumps({}))
 
@@ -54,7 +55,7 @@ inputs = json.loads(json.dumps({}))
 @pytest.fixture(scope='function', params=virtual_machine_list)
 def blueprint_test(request):
     blueprints_upload(
-        'examples/virtual-machine/{0}.yaml'.format(infra_name),
+        infra_path.format(infra_name),
         'infra-{0}'.format(infra_name))
     dirname_param = os.path.dirname(request.param).split('/')[-1:][0]
     try:
