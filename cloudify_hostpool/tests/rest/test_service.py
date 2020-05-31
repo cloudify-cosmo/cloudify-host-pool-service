@@ -175,7 +175,6 @@ class ServiceTest(testtools.TestCase):
     def test_get_bad_host(self):
         '''Tests GET /host/<host_id> with a non-existent host'''
         result = self.app.get('/host/999999')
-        print 'result: {0}, {1}'.format(result, result.status_code)
         self.assertEqual(result.status_code, httplib.NOT_FOUND)
 
     def test_update_host(self):
