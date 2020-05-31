@@ -20,19 +20,19 @@
 
 # pylint: disable=R0911
 
+import socket
+import logging
+import filelock
 from copy import deepcopy
 from collections import Mapping
-import filelock
-import logging
-import socket
 
 # Used for IP / CIDR routines
 from netaddr import IPNetwork
 from netaddr.core import AddrFormatError
 
-from .._compat import text_type
 from .. import constants
 from .. import exceptions
+from .._compat import text_type
 from ..storage.tinydb_nosql import Database
 
 # we currently don't expose these in the configuration because its somewhat

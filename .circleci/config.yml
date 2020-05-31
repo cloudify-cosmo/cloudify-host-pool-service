@@ -225,7 +225,7 @@ workflows:
   tests:
     jobs: &all_jobs
       - py3_compat
-#      - unittests_py27
+      - unittests_py27
 #      - unittests_py36
 #      - wagon:
 #          filters:

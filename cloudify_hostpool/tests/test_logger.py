@@ -20,27 +20,29 @@
 
 # pylint: disable=R0201
 
-import testtools
+import os
+import json
 import logging
 import tempfile
-import os
+import testtools
 from testtools import ExpectedException
 from testtools.matchers import Equals
+
 from cloudify.mocks import MockCloudifyContext
 from cloudify.exceptions import NonRecoverableError
-from cloudify_hostpool.logger import get_hostpool_logger
+
+from ..logger import get_hostpool_logger
 
 
 class LoggerTestCase(testtools.TestCase):
     '''Tests the debug log creator'''
     def setUp(self):
         testtools.TestCase.setUp(self)
+        rp = json.loads(json.dumps({'working_directory': '/tmp'}))
         self.ctx = MockCloudifyContext(
             node_id='test_logger',
             node_name='LoggerTestCase',
-            runtime_properties={
-                'working_directory': '/tmp'
-            })
+            runtime_properties=rp)
         self.debug_logfile = os.path.join(
             tempfile.gettempdir(), 'cfy-mock-debug.log')
 

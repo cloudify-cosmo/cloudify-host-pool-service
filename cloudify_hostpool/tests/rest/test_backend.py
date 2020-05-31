@@ -18,12 +18,12 @@
     Tests for REST backend service
 '''
 
+import mock
 import testtools
 from testtools import matchers
-import mock
 
-from cloudify_hostpool import constants, exceptions
-from cloudify_hostpool.rest.backend import RestBackend
+from ... import constants, exceptions
+from ...rest.backend import RestBackend
 
 
 def _mock_scan_alive(self, _):

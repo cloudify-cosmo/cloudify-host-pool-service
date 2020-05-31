@@ -12,17 +12,20 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+
 '''
     cloudify_hostpool.storage.tinydb
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     TinyDB NoSQL storage interface for the RESTful service
 '''
 
-from contextlib import contextmanager
-from cloudify_hostpool.storage.base import Storage
-from cloudify_hostpool import constants
-from tinydb import TinyDB
 import filelock
+from contextlib import contextmanager
+
+from tinydb import TinyDB
+
+from .. import constants
+from ..storage.base import Storage
 
 LOCK_FILE = 'db_ops.lck'
 DB_FILENAME = 'db_hostpool.json'
