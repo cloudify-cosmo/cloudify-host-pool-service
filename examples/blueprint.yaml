@@ -4,7 +4,7 @@ description: Cloudify Getting Started blueprint. Deploys JBoss.
 
 imports:
   - http://cloudify.co/spec/cloudify/5.0.5/types.yaml
-  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/master.yaml
+  - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-host-pool-service/master/host-pool-service.yaml
   - plugin:cloudify-fabric-plugin
 
 inputs:
