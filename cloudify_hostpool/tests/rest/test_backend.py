@@ -18,12 +18,13 @@
     Tests for REST backend service
 '''
 
+import json
+import mock
 import testtools
 from testtools import matchers
-import mock
 
-from cloudify_hostpool import constants, exceptions
-from cloudify_hostpool.rest.backend import RestBackend
+from ... import constants, exceptions
+from ...rest.backend import RestBackend
 
 
 def _mock_scan_alive(self, _):
@@ -57,7 +58,7 @@ class RestBackendTest(testtools.TestCase):
     @staticmethod
     def _generate_hosts(count):
         '''Generate a list of hosts'''
-        return [{
+        return json.loads(json.dumps([{
             'name': 'test-host-{0}'.format(idx + 10),
             'os': 'linux',
             'endpoint': {
@@ -70,7 +71,7 @@ class RestBackendTest(testtools.TestCase):
                 'password': 'p4ssw0rd'
             },
             'tags': ['test_{0}'.format(idx)]
-        } for idx in range(count)]
+        } for idx in range(count)]))
 
     def test_list_hosts(self):
         '''Test the number of existing entries'''
@@ -89,11 +90,12 @@ class RestBackendTest(testtools.TestCase):
         # Test with no hosts
         self.assertRaises(
             exceptions.HostPoolHTTPException,
-            self.backend.add_hosts, {'default': {'os': 'linux'}})
+            self.backend.add_hosts, json.loads(json.dumps(
+                {'default': {'os': 'linux'}})))
         # Test with invalid default type
         self.assertRaises(
             exceptions.ConfigurationError,
-            self.backend.add_hosts, {
+            self.backend.add_hosts, json.loads(json.dumps({
                 'default': [{'os': 'linux'}],
                 'hosts': [{
                     'os': 'windows',
@@ -102,11 +104,11 @@ class RestBackendTest(testtools.TestCase):
                         'password': 'bar'
                     }
                 }]
-            })
+            })))
         # Test with invalid endpoint type
         self.assertRaises(
             exceptions.ConfigurationError,
-            self.backend.add_hosts, {
+            self.backend.add_hosts, json.loads(json.dumps({
                 'default': {'endpoint': 1234},
                 'hosts': [{
                     'os': 'windows',
@@ -115,11 +117,11 @@ class RestBackendTest(testtools.TestCase):
                         'password': 'bar'
                     }
                 }]
-            })
+            })))
         # Test with invalid default keys present and invalid endpoint
         self.assertRaises(
             exceptions.ConfigurationError,
-            self.backend.add_hosts, {
+            self.backend.add_hosts, json.loads(json.dumps({
                 'default': {
                     'os': 'linux',
                     'platform': {'foo': 'bar'},
@@ -132,15 +134,16 @@ class RestBackendTest(testtools.TestCase):
                         'password': 'bar'
                     }
                 }]
-            })
+            })))
         # Test with unknown OS
         self.assertRaises(
             exceptions.ConfigurationError,
-            self.backend.add_hosts, {'hosts': [{'os': 'solaris'}]})
+            self.backend.add_hosts, json.loads(json.dumps(
+                {'hosts': [{'os': 'solaris'}]})))
         # Test without an endpoint
         self.assertRaises(
             exceptions.ConfigurationError,
-            self.backend.add_hosts, {
+            self.backend.add_hosts, json.loads(json.dumps({
                 'hosts': [{
                     'os': 'windows',
                     'credentials': {
@@ -148,11 +151,11 @@ class RestBackendTest(testtools.TestCase):
                         'password': 'bar'
                     }
                 }]
-            })
+            })))
         # Test with invalid tags
         self.assertRaises(
             exceptions.ConfigurationError,
-            self.backend.add_hosts, {
+            self.backend.add_hosts, json.loads(json.dumps({
                 'hosts': [{
                     'os': 'windows',
                     'credentials': {
@@ -162,7 +165,7 @@ class RestBackendTest(testtools.TestCase):
                     'endpoint': {'ip': '123.123.123.123'},
                     'tags': {'foo': 'bar'}
                 }]
-            })
+            })))
 
     @mock.patch('cloudify_hostpool.rest.backend.RestBackend.host_port_scan',
                 _mock_scan_alive)

@@ -12,25 +12,26 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+
 '''
     cloudify_hostpool.tests.rest.test_service
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Tests for REST service
 '''
 
+# pylint: disable=R0904
+
 import os
-import testtools
 import mock
 import json
 import yaml
-import httplib
 import logging
 import threading
+import testtools
 
-from cloudify_hostpool import constants
-from cloudify_hostpool.tests import rest
-
-# pylint: disable=R0904
+from ... import constants
+from ...tests import rest
+from ..._compat import httplib
 
 
 def _mock_scan_alive(self, _):
@@ -58,11 +59,10 @@ class ServiceTest(testtools.TestCase):
             'resources',
             'host-pool.yaml'
         )
-        config = dict()
         with open(config_path, 'r') as f_cfg:
             config = yaml.load(f_cfg)
 
-        from cloudify_hostpool.rest import service
+        from ...rest import service
 
         # flask feature, should provider more detailed errors
         service.app.config['TESTING'] = True
@@ -175,7 +175,6 @@ class ServiceTest(testtools.TestCase):
     def test_get_bad_host(self):
         '''Tests GET /host/<host_id> with a non-existent host'''
         result = self.app.get('/host/999999')
-        print 'result: {0}, {1}'.format(result, result.status_code)
         self.assertEqual(result.status_code, httplib.NOT_FOUND)
 
     def test_update_host(self):
@@ -335,7 +334,7 @@ class ServiceConcurrencyTest(testtools.TestCase):
         with open(config_path, 'r') as f_cfg:
             config = yaml.load(f_cfg)
 
-        from cloudify_hostpool.rest import service
+        from ...rest import service
 
         # flask feature, should provider more detailed errors
         service.app.config['TESTING'] = True
