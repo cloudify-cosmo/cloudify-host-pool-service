@@ -251,7 +251,6 @@ jobs:
       - checkout
       - generate_rhel_py27py36_wagon
 
-
   integration_tests_505:
     executor: cloudify-machine
     environment:
@@ -269,6 +268,7 @@ jobs:
     steps:
       - checkout
       - run_integration_tests_510
+
   release:
     executor: py27
     steps:
