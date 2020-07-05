@@ -24,7 +24,7 @@ import yaml
 import logging
 from tempfile import mkstemp
 
-from fabric.api import run, put, sudo
+from fabric2 import task
 RUN_WITH = 'source /home/centos/host_pool_service/bin/activate &&'
 
 from cloudify import ctx
@@ -34,14 +34,14 @@ BASE_DIR = ctx.instance.runtime_properties.get('working_directory')
 POOL_CFG_PATH = os.path.join(BASE_DIR, 'pool.yaml')
 
 
-def get_key_content(key_file, logger):
+def get_key_content(key_file, logger, connection):
     '''Downloads a key and returns the key contents'''
     tfd, target_path = mkstemp()
     os.close(tfd)
     logger.debug('Downloading key file "{0}" to path "{1}"'
                  .format(key_file, target_path))
     local_key_file = ctx.download_resource(key_file)
-    put(local_key_file, target_path)
+    connection.put(local_key_file, target_path)
     keycontent = None
     with open(target_path, 'r') as f_key:
         keycontent = f_key.read()
@@ -51,7 +51,7 @@ def get_key_content(key_file, logger):
     return keycontent
 
 
-def set_host_key_content(cfg, logger):
+def set_host_key_content(cfg, logger, connection):
     '''Replaces host key file string with key content
 
     :param dict cfg: Host-Pool configuration data
@@ -67,7 +67,7 @@ def set_host_key_content(cfg, logger):
         # Default key file was specified, let's convert and use
         logger.debug('Default key file: "{0}"'.format(default_key_file))
         cfg['default']['credentials']['key'] = \
-            get_key_content(default_key_file, logger)
+            get_key_content(default_key_file, logger, connection)
         del cfg['default']['credentials']['key_file']
 
     # Get the host keys
@@ -81,7 +81,7 @@ def set_host_key_content(cfg, logger):
             # Default key file was specified, let's convert and use
             logger.debug('Host key file: "{0}"'.format(host_key_file))
             host['credentials']['key'] = \
-                get_key_content(host_key_file, logger)
+                get_key_content(host_key_file, logger, connection)
             del host['credentials']['key_file']
     return cfg
 
@@ -130,7 +130,8 @@ def get_hostpool_logger(mod, debug=False,
     return logger
 
 
-def main():
+@task
+def main(connection):
     '''Entry point'''
 
     logger = get_hostpool_logger('configure',
@@ -146,7 +147,7 @@ def main():
                  .format(ctx.node.properties['pool'], POOL_CFG_PATH))
     local_file = ctx.download_resource(ctx.node.properties['pool'],
                                        target_path=POOL_CFG_PATH)
-    put(local_file, POOL_CFG_PATH)
+    connection.put(local_file, POOL_CFG_PATH)
 
     # if not os.path.exists(POOL_CFG_PATH):
     #     raise NonRecoverableError('Configuration file for the Host-Pool '
@@ -162,7 +163,7 @@ def main():
             raise NonRecoverableError('Configuration file for the Host-Pool '
                                       'service is not valid YAML')
         logger.info('Converting host key files from blueprint')
-        seed_config = set_host_key_content(cfg, logger)
+        seed_config = set_host_key_content(cfg, logger, connection)
         ctx.instance.runtime_properties['seed_config'] = seed_config
 
 # main()
