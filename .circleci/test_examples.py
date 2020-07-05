@@ -24,14 +24,29 @@ from ecosystem_tests.dorkl import (
     cleanup_on_failure, prepare_test
 )
 
-OS_VERSION = '3.2.15'
+OS_VERSION = '3.2.16'
 OS_WAGON = 'https://github.com/cloudify-cosmo/cloudify-openstack-plugin/' \
-           'releases/download/{v}/cloudify_openstack_plugin-{v}-py27-none-' \
-           'linux_x86_64-centos-Core.wgn'.format(v=OS_VERSION)
-OS_PLUGIN = 'https://github.com/cloudify-cosmo/' \
-            'cloudify-openstack-plugin/releases/download/' \
-            '{v}/plugin.yaml'.format(v=OS_VERSION)
-PLUGINS_TO_UPLOAD = [(OS_WAGON, OS_PLUGIN)]
+           'releases/download/{v}/cloudify_openstack_plugin-{v}-' \
+           'centos-Core-py27.py36-none-linux_x86_64.wgn'.format(v=OS_VERSION)
+OS_PLUGIN = 'https://github.com/cloudify-cosmo/cloudify-openstack-plugin/' \
+            'releases/download/{v}/plugin.yaml'.format(v=OS_VERSION)
+'''Temporary until all the plugins in the bundle will 
+released with py2py3 wagons'''
+UT_VERSION = '1.23.5'
+UT_WAGON = 'https://github.com/cloudify-incubator/cloudify-utilities-plugin/' \
+           'releases/download/{v}/cloudify_utilities_plugin-{v}-centos' \
+           '-Core-py27.py36-none-linux_x86_64.wgn'.format(v=UT_VERSION)
+UT_PLUGIN = 'https://github.com/cloudify-incubator/cloudify-utilities-' \
+            'plugin/releases/download/{v}/plugin.yaml'.format(v=UT_VERSION)
+FAB_VERSION = '2.0.4'
+FAB_WAGON = 'https://github.com/cloudify-cosmo/cloudify-fabric-plugin/' \
+            'releases/download/{v}/cloudify_fabric_plugin-{v}-centos-' \
+            'Core-py27.py36-none-linux_x86_64.wgn'.format(v=FAB_VERSION)
+FAB_PLUGIN = 'https://github.com/cloudify-cosmo/cloudify-fabric-plugin/' \
+             'releases/download/{v}/plugin.yaml'.format(v=FAB_VERSION)
+
+PLUGINS_TO_UPLOAD = [(OS_WAGON, OS_PLUGIN), (UT_WAGON, UT_PLUGIN),
+                     (FAB_WAGON, FAB_PLUGIN)]
 
 
 SECRETS_TO_CREATE = {
@@ -54,7 +69,7 @@ SECRETS_TO_CREATE = {
 
 prepare_test(plugins=PLUGINS_TO_UPLOAD,
              secrets=SECRETS_TO_CREATE,
-             plugin_test=False)
+             plugin_test=False, execute_bundle_upload=False)
 
 virtual_machine_list = ['examples/blueprint.yaml']
 infra_path = 'examples/blueprint-examples/virtual-machine/{0}.yaml'

@@ -23,7 +23,7 @@ import logging
 from signal import SIGINT
 from subprocess import Popen, PIPE
 
-from fabric.api import run, put, sudo
+from fabric2 import task
 RUN_WITH = 'source /home/centos/host_pool_service/bin/activate &&'
 
 from cloudify import ctx
@@ -77,10 +77,10 @@ def get_hostpool_logger(mod, debug=False,
     return logger
 
 
-def stop_service(logger):
+def stop_service(logger,connection):
     '''Stops the service'''
     logger.info('(sudo) Stopping the {0} service'.format(SVC_NAME))
-    run(RUN_WITH + 'sudo /etc/init.d/{0} stop'.format(SVC_NAME))
+    connection.run(RUN_WITH + 'sudo /etc/init.d/{0} stop'.format(SVC_NAME))
     # if code:
     #     raise NonRecoverableError('Failed service stop.')
     # proc = Popen(['sudo', 'service', SVC_NAME, 'stop'], stderr=PIPE)
@@ -104,7 +104,8 @@ def stop_standalone_service(logger):
             os.kill(svc_pid, SIGINT)
 
 
-def main():
+@task
+def main(connection):
     '''Entry point'''
     # os.system('source {0}/bin/activate'.format(
     #     ctx.instance.runtime_properties['virtualenv']))
@@ -113,7 +114,7 @@ def main():
                                  debug=ctx.node.properties.get('debug'))
     if ctx.node.properties.get('run_as_daemon'):
         # Delete working directory
-        stop_service(logger)
+        stop_service(logger, connection)
     else:
         # Kill service process
         stop_standalone_service(logger)
