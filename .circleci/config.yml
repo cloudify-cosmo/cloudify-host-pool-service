@@ -338,7 +338,6 @@ workflows:
       - unittests_py27
       - unittests_py36
 #      - validate_documentation
-
       - wagon:
           filters:
             branches:
