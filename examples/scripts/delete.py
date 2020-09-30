@@ -22,7 +22,7 @@ import logging
 from subprocess import Popen, PIPE, call
 from shutil import rmtree
 
-from fabric.api import run, put, sudo
+from fabric2 import task
 RUN_WITH = 'source /home/centos/host_pool_service/bin/activate &&'
 
 from cloudify import ctx
@@ -33,10 +33,11 @@ SVC_NAME = 'cloudify-hostpool'
 INIT_PATH = '/etc/init.d/{0}'.format(SVC_NAME)
 
 
-def cmd_exists(cmd, logger):
+def cmd_exists(cmd, logger, connection):
     '''Test to see if a command exists on the system'''
     logger.debug('Checking if command "{0}" exists'.format(cmd))
-    return run(RUN_WITH + 'type {0}'.format(cmd))
+    return connection.run(RUN_WITH + 'type {0}'.format(cmd),
+                          warn=True).return_code
     # retval = call("type " + cmd, shell=True, stdout=PIPE, stderr=PIPE) == 0
     # logger.debug('Command "{0}" {1} found'
     #              .format(cmd, 'was' if retval else 'was not'))
@@ -57,23 +58,23 @@ def uninstall_service(logger):
     #                  '/etc/init.d/: {0}'.format(err))
 
 
-def remove_service_from_boot(logger):
+def remove_service_from_boot(logger, connection):
     '''Disables the service from starting on system boot'''
     # Disable service from boot
     logger.info('(sudo) Disabling the Host-Pool service from '
                 'starting on boot')
 
     # Red Hat
-    if cmd_exists('chkconfig', logger):
+    if cmd_exists('chkconfig', logger, connection):
         try:
-            run(RUN_WITH + 'sudo chkconfig --del {0}'.format(SVC_NAME))
+            connection.run(RUN_WITH + 'sudo chkconfig --del {0}'.format(SVC_NAME))
         except:
             pass
         # proc = Popen(['sudo', 'chkconfig', '--del', SVC_NAME],
         #              stderr=PIPE)
     # Debian
-    elif cmd_exists('update-rc.d', logger):
-        code = run(RUN_WITH + 'sudo update-rc.d {0} remove'.format(SVC_NAME))
+    elif cmd_exists('update-rc.d', logger, connection):
+        code = connection.run(RUN_WITH + 'sudo update-rc.d {0} remove'.format(SVC_NAME))
         #
         # proc = Popen(['sudo', 'update-rc.d', SVC_NAME, 'remove'],
         #              stderr=PIPE)
@@ -137,7 +138,8 @@ def get_hostpool_logger(mod, debug=False,
     return logger
 
 
-def main():
+@task
+def main(connection):
     '''Entry point'''
 
     os.system('source {0}/bin/activate'.format(
@@ -148,7 +150,7 @@ def main():
 
     if ctx.node.properties.get('run_as_daemon'):
         # Disable the service from starting on boot
-        remove_service_from_boot(logger)
+        remove_service_from_boot(logger, connection)
         # Delete the actual service sysv init script
         uninstall_service(logger)
     # Delete working directory

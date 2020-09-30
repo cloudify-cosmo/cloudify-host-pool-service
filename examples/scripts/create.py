@@ -20,8 +20,7 @@
 
 import os
 
-from fabric.api import run, put, sudo
-from fabric.context_managers import cd
+from fabric2 import task
 
 RUN_WITH = 'source /home/centos/host_pool_service/bin/activate &&'
 
@@ -31,15 +30,15 @@ from cloudify.exceptions import RecoverableError
 RUN_WITH = 'source /home/centos/host_pool_service/bin/activate &&'
 
 
-def install_requirements():
+def install_requirements(connection):
     '''Install required Python packages'''
 
-    with cd('/home/centos'):
-        run('curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py')
-        run('python get-pip.py')
-        run('pip install virtualenv')
-        run('virtualenv /home/centos/host_pool_service')
-        ctx.instance.runtime_properties['virtualenv'] = \
+    with connection.cd("/home/centos"):
+        connection.run('curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py')
+        connection.run('python get-pip.py')
+    connection.sudo('yum install -y python-virtualenv')
+    connection.run('virtualenv /home/centos/host_pool_service')
+    ctx.instance.runtime_properties['virtualenv'] = \
             '/home/centos/host_pool_service'
 
     reqs = [
@@ -51,7 +50,7 @@ def install_requirements():
 
     for req in reqs:
         ctx.logger.info('Installing Python package "{0}"'.format(req))
-        run(RUN_WITH + 'pip install {0}'.format(req))
+        connection.run(RUN_WITH + 'pip install {0}'.format(req))
         # install(req)
 
 
@@ -63,7 +62,8 @@ def create_virtualenv():
     os.system('source {0}/bin/activate'.format(venv_name))
 
 
-def main():
+@task
+def main(connection):
     '''Entry point'''
 
     # create_virtualenv()
@@ -73,7 +73,7 @@ def main():
     ctx.logger.info('UNAME {0}'.format(os.uname()))
     try:
         ctx.logger.info('Creating working directory: "{0}"'.format(base_dir))
-        run('mkdir -p {0}'.format(base_dir))
+        connection.run('mkdir -p {0}'.format(base_dir))
         # if not os.path.isdir(base_dir):
         #     os.makedirs(base_dir)
     except OSError as ex:
@@ -81,7 +81,7 @@ def main():
         raise RecoverableError(message=ex, retry_after=2)
 
     ctx.logger.info('Installing required Python packages')
-    install_requirements()
+    install_requirements(connection)
 
     ctx.logger.info('Setting runtime_property "working_directory" to "{0}"'
                     .format(base_dir))

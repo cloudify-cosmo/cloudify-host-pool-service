@@ -2,7 +2,11 @@ mock>=1.0.1
 subprocess32>=3.2.6
 testtools
 requests==2.7.0
-https://github.com/cloudify-cosmo/cloudify-common/archive/master.zip
 flake8
 nose
 nose-cov
+
+# For integration tests
+git+https://github.com/cloudify-cosmo/cloudify-common@master#egg=cloudify-common[dispatcher]==master
+git+https://github.com/cloudify-cosmo/cloudify-cli@master#egg=cloudify-cli==master
+pytest==4.6.3

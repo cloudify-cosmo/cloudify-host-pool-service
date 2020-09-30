@@ -27,7 +27,7 @@ import tempfile
 from subprocess import Popen, PIPE, call
 import requests
 
-from fabric.api import run, put, sudo
+from fabric2 import task
 RUN_WITH = 'source /home/centos/host_pool_service/bin/activate &&'
 
 from cloudify import ctx
@@ -91,17 +91,18 @@ def get_hostpool_logger(mod, debug=False,
     return logger
 
 
-def cmd_exists(cmd, logger):
+def cmd_exists(cmd, logger, connection):
     '''Test to see if a command exists on the system'''
     logger.debug('Checking if command "{0}" exists'.format(cmd))
-    return run(RUN_WITH + 'type {0}'.format(cmd))
+    return connection.run(RUN_WITH + 'type {0}'.format(cmd),
+                          warn=True).return_code
     # retval = call("type " + cmd, shell=True, stdout=PIPE, stderr=PIPE) == 0
     # logger.debug('Command "{0}" {1} found'
     #              .format(cmd, 'was' if retval else 'was not'))
     # return retval
 
 
-def download_service(logger):
+def download_service(logger, connection):
     '''Downloads the service file and pre-processes'''
     # Grab the init script from the package
     logger.info('Downloading Host-Pool service init script')
@@ -137,24 +138,25 @@ def download_service(logger):
         'resources/service_init.sh',
         template_variables=variables
     )
-    put(temp_name, '/home/centos/temp_service_file')
+    connection.put(temp_name, '/home/centos/temp_service_file')
     return '/home/centos/temp_service_file'
 
 
-def set_service_permissions(svc, logger):
+def set_service_permissions(svc, logger, connection):
     '''Set the correct access, owner, and group for the service'''
     # Set init script as executable
     logger.debug('Setting init script as executable')
     # os.chmod(svc, os.stat(svc).st_mode | 0o111)
     # logger.debug('Init script permissions: {0}'
     #              .format(oct(os.stat(svc).st_mode)))
-    run('chmod 775 {0}'.format(svc))
+    connection.run('chmod 775 {0}'.format(svc))
 
     # Set init script owner to root
     logger.debug('(sudo) Setting owner of "{0}" to "root:root"'
                  .format(svc))
-    code = run(RUN_WITH + 'sudo chown root:root {0}'.format(svc))
-    if code:
+    res = connection.sudo('chown root:root {0}'.format(svc))
+    ctx.logger.info("res.return_code={}".format(res.return_code))
+    if res.return_code:
         raise NonRecoverableError('Failed chown.')
     # proc = Popen(['sudo', 'chown', 'root:root', svc], stderr=PIPE)
     # err = proc.communicate()
@@ -163,11 +165,11 @@ def set_service_permissions(svc, logger):
     #                               .format(svc, err))
 
 
-def install_service(svc, logger):
+def install_service(svc, logger, connection):
     '''Installs the service into /etc/init.d/'''
     logger.debug('(sudo) Moving "{0}" to "{1}"'.format(svc, INIT_PATH))
-    code = run(RUN_WITH + 'sudo mv {0} {1}'.format(svc, INIT_PATH))
-    if code:
+    code = connection.run(RUN_WITH + 'sudo mv {0} {1}'.format(svc, INIT_PATH))
+    if code.return_code:
         raise NonRecoverableError('Failed mv.')
     # proc = Popen(['sudo', 'mv', svc, INIT_PATH], stderr=PIPE)
     # err = proc.communicate()
@@ -177,10 +179,10 @@ def install_service(svc, logger):
     #                               '/etc/init.d/: {0}'.format(err))
 
 
-def start_service(logger):
+def start_service(logger, connection):
     '''Starts the service'''
     logger.info('(sudo) Starting the Host-Pool service')
-    run(RUN_WITH + 'sudo {0} restart'.format(INIT_PATH))
+    connection.run(RUN_WITH + 'sudo {0} restart'.format(INIT_PATH))
     # if code:
     #     raise NonRecoverableError('Failed service start.')
     # proc = Popen(['sudo', 'service', SVC_NAME, 'start'], stderr=PIPE)
@@ -191,20 +193,20 @@ def start_service(logger):
     #                            .format(err))
 
 
-def set_service_on_boot(logger):
+def set_service_on_boot(logger, connection):
     '''Sets up the service to start on system boot'''
     # Enable service on boot
     logger.info('(sudo) Enabling the Host-Pool service on boot')
 
     # Red Hat
-    if cmd_exists('chkconfig', logger):
-        code = run(RUN_WITH + 'sudo chkconfig --add {0}'.format(SVC_NAME),
+    if cmd_exists('chkconfig', logger, connection):
+        code = connection.run(RUN_WITH + 'sudo chkconfig --add {0}'.format(SVC_NAME),
                     shell=False)
         # proc = Popen(['sudo', 'chkconfig', '--add', SVC_NAME],
         #              stderr=PIPE)
     # Debian
-    elif cmd_exists('update-rc.d', logger):
-        code = run(RUN_WITH + 'sudo update-rc.d {0} defaults'.format(SVC_NAME),
+    elif cmd_exists('update-rc.d', logger, connection):
+        code = connection.run(RUN_WITH + 'sudo update-rc.d {0} defaults'.format(SVC_NAME),
                     shell=False)
         # proc = Popen(['sudo', 'update-rc.d', SVC_NAME, 'defaults'],
         #              stderr=PIPE)
@@ -213,7 +215,7 @@ def set_service_on_boot(logger):
         raise NonRecoverableError(
             'Neither chkconfig or update-rc.d was found')
 
-    if code:
+    if code.return_code:
         raise NonRecoverableError('Failed chkconfig.')
 
     # if proc:
@@ -268,7 +270,7 @@ def install_seed_hosts(logger):
             raise RecoverableError(ex)
 
 
-def start_standalone_service(logger):
+def start_standalone_service(logger,connection):
     '''Starts a standalone service process'''
     logger.info('Starting the Host-Pool service (standalone)')
     svc_cmd = \
@@ -283,12 +285,12 @@ def start_standalone_service(logger):
             'cloudify_hostpool.rest.service:app'
         )
     logger.debug('Executing: {0}'.format(svc_cmd))
-    run(RUN_WITH + svc_cmd)
+    connection.run(RUN_WITH + svc_cmd)
     # svc_pid = Popen(svc_cmd, shell=True).pid
     # logger.debug('Service task spawned with PID "{0}'.format(svc_pid))
 
-
-def main():
+@task
+def main(connection):
     '''Entry point'''
     logger = get_hostpool_logger('start',
                                  debug=ctx.node.properties.get('debug'))
@@ -300,18 +302,18 @@ def main():
 
     if ctx.node.properties.get('run_as_daemon'):
         # Grab the init script from the package
-        svc_tmp = download_service(logger)
+        svc_tmp = download_service(logger, connection)
         # Set the correct service permissions
-        set_service_permissions(svc_tmp, logger)
+        set_service_permissions(svc_tmp, logger, connection)
         # Move the init script to /etc/init.d/
-        install_service(svc_tmp, logger)
+        install_service(svc_tmp, logger, connection)
         # Start the service
-        start_service(logger)
+        start_service(logger, connection)
         # Enable the service to start on boot
-        set_service_on_boot(logger)
+        set_service_on_boot(logger, connection)
     else:
         # Start the stand-alone process
-        start_standalone_service(logger)
+        start_standalone_service(logger, connection)
     # Test if the service is alive
     test_service_liveness(logger)
     # Install any seed hosts data into the service
