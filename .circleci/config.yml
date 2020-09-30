@@ -29,6 +29,40 @@ executors:
 
 
 commands:
+
+
+  validate_documentation:
+    steps:
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update --remote --recursive
+      - run:
+          name: Download pip
+          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+      - run:
+          name: Install pip
+          command: sudo python get-pip.py
+      - run:
+          name: Install virtualenv
+          command: pip install --user virtualenv
+      - run:
+          name: Init virtualenv
+          command: virtualenv env
+      - run:
+          name: install tox
+          command: pip install --user pygithub pyyaml==3.10
+      - run:
+          name: upgrade setuptools
+          command: pip install --upgrade setuptools
+      - run:
+          name: install local project
+          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
+      - attach_workspace:
+          at: workspace
+      - run: python .circleci/validate_docs.py
+
   run_unittest:
     steps:
       - run:
@@ -199,7 +233,49 @@ commands:
           at: workspace
       - run: python .circleci/package_release.py
 
+
+
+  merge_docs:
+    steps:
+      - attach_workspace:
+          at: workspace
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update --remote --recursive
+      - run:
+          name: Download pip
+          command: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+      - run:
+          name: Install pip
+          command: sudo python get-pip.py
+      - run:
+          name: Install virtualenv
+          command: pip install --user virtualenv
+      - run:
+          name: Init virtualenv
+          command: virtualenv env
+      - run:
+          name: install tox
+          command: pip install --user pygithub pyyaml==3.10
+      - run:
+          name: upgrade setuptools
+          command: pip install --upgrade setuptools
+      - run:
+          name: install local project
+          command: pip install https://github.com/cloudify-incubator/cloudify-ecosystem-test/archive/latest.zip
+      - attach_workspace:
+          at: workspace
+      - run: python .circleci/merge_docs.py
+
 jobs:
+
+  validate_documentation:
+    executor: py27
+    steps:
+      - checkout
+      - validate_documentation
 
   unittests_py27:
     executor: py27
@@ -248,13 +324,21 @@ jobs:
       - checkout
       - release_plugin
 
+  merge_docs:
+    executor: py27
+    steps:
+      - checkout
+      - merge_docs
+
 workflows:
   version: 2
   tests:
-    jobs: &all_jobs
+    jobs:
       - py3_compat
       - unittests_py27
       - unittests_py36
+#      - validate_documentation
+
       - wagon:
           filters:
             branches:
@@ -263,21 +347,29 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master)/
-      - integration_tests:
-          requires:
-            - wagon
-            - rhel_wagon
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master)/
-      - release:
-          filters:
-            branches:
-              only: /master/
-          requires:
-            - wagon
-            - rhel_wagon
-            - integration_tests
+#      - integration_tests:
+#          requires:
+#            - wagon
+#            - rhel_wagon
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master)/
+#      - release:
+#          filters:
+#            branches:
+#              only: /master/
+#          requires:
+#            - wagon
+#            - rhel_wagon
+#            - integration_tests
+#      - merge_docs:
+#          filters:
+#            branches:
+#              only: /master/
+#          requires:
+#            - release
+#            - validate_documentation
+
   nightly:
     triggers:
     - schedule:
@@ -298,10 +390,10 @@ workflows:
           filters:
             branches:
               only: /([0-9\.]*\-build|master)/
-      - integration_tests:
-          requires:
-            - wagon
-            - rhel_wagon
-          filters:
-            branches:
-              only: /([0-9\.]*\-build|master)/
+#      - integration_tests:
+#          requires:
+#            - wagon
+#            - rhel_wagon
+#          filters:
+#            branches:
+#              only: /([0-9\.]*\-build|master)/
