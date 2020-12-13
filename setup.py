@@ -18,7 +18,7 @@ from setuptools import setup
 
 setup(
     name='cloudify-host-pool-service',
-    version='1.2.2',
+    version='1.2.3',
     license='LICENSE',
     packages=['cloudify_hostpool',
               'cloudify_hostpool.tests',
@@ -29,9 +29,9 @@ setup(
     install_requires=[
         'flask',
         'flask_restful',
-        'PyYAML==3.10',
+        'pyyaml>=4.2b1',
         'netaddr',
-        'requests==2.7.0',
+        "requests>=2.7.0,<3.0",
         'filelock==0.2.0',
         'tinydb>=3.15.0,<4.0.0',
         'six'
