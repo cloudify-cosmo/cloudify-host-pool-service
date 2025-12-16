@@ -32,7 +32,7 @@ setup(
         'pyyaml>=4.2b1',
         'netaddr',
         "requests>=2.7.0,<3.0",
-        'filelock==0.2.0',
+        'filelock==3.20.1',
         'tinydb>=3.15.0,<4.0.0',
         'six'
     ]
